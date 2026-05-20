@@ -1,0 +1,1909 @@
+<!DOCTYPE html>
+<html lang="th" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบสืบค้นและจัดการคะแนนนักเรียน - โรงเรียนบางมดวิทยา</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Sarabun) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <!-- SheetJS (XLSX) Library for Reading Excel files -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+        }
+        /* Custom scrollbar for better UX */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="goToHome()">
+                <div class="bg-white p-2 rounded-full w-10 h-10 flex items-center justify-center shadow">
+                    <i class="fa-solid fa-graduation-cap text-blue-900 text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-sm sm:text-base leading-tight">โรงเรียนบางมดวิทยา "สีสุกหวาดจวนอุปถัมภ์"</h1>
+                    <p class="text-xs text-blue-200">ระบบเช็คคะแนนนักเรียนออนไลน์ ภาคเรียนที่ 1/2569</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <!-- User Status Display -->
+                <div id="userBadge" class="hidden sm:flex items-center space-x-2 px-3 py-1.5 bg-white/10 rounded-full text-xs font-medium">
+                    <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+                    <span id="userBadgeText">ผู้ใช้งาน</span>
+                </div>
+                
+                <button id="logoutBtn" onclick="handleLogout()" class="hidden bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors">
+                    <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+        <!-- ================= PAGE 1: CHOOSE PORTAL / WELCOME ================= -->
+        <section id="pageHome" class="space-y-8 animate-fade-in py-8">
+            <div class="text-center max-w-2xl mx-auto space-y-3">
+                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold uppercase tracking-wider">BMW Score Portal</span>
+                <h2 class="text-3xl font-extrabold text-slate-800 sm:text-4xl">ยินดีต้อนรับสู่ระบบรายงานผลคะแนน</h2>
+                <p class="text-slate-600 text-sm sm:text-base">เลือกสถานะผู้ใช้งานที่ท่านต้องการเข้าสู่ระบบ เพื่อดำเนินการตรวจสอบผลการเรียนหรือการจัดการฐานข้อมูล</p>
+            </div>
+
+            <!-- Portal Grid Selection -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto pt-4">
+                
+                <!-- Card: Student Portal -->
+                <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-xl hover:border-blue-300 transition-all duration-300 flex flex-col justify-between group cursor-pointer" onclick="showLoginTab('student')">
+                    <div class="space-y-4">
+                        <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
+                            <i class="fa-solid fa-user-graduate text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800">นักเรียน (Student)</h3>
+                            <p class="text-slate-500 text-xs mt-1">เข้าดูคะแนนย่อย ผลงาน คะแนนกลางภาคและปลายภาค เรียนของตนเองเป็นรายบุคคลโดยใช้รหัสประจำตัว</p>
+                        </div>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-slate-100 flex items-center text-sm font-semibold text-blue-600 group-hover:translate-x-1 transition-transform">
+                        <span>เข้าสู่ระบบตรวจสอบคะแนน</span>
+                        <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
+                    </div>
+                </div>
+
+                <!-- Card: Teacher Portal -->
+                <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-xl hover:border-teal-300 transition-all duration-300 flex flex-col justify-between group cursor-pointer" onclick="showLoginTab('teacher')">
+                    <div class="space-y-4">
+                        <div class="w-12 h-12 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center group-hover:bg-teal-600 group-hover:text-white transition-all duration-300">
+                            <i class="fa-solid fa-user-tie text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800">คุณครูผู้สอน (Teacher)</h3>
+                            <p class="text-slate-500 text-xs mt-1">อัปโหลดคะแนนนักเรียนผ่าน Excel อัปเดตตารางวิชา คะแนนกลางภาค ตรวจสอบข้อมูลรายวิชาและห้องเรียน</p>
+                        </div>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-slate-100 flex items-center text-sm font-semibold text-teal-600 group-hover:translate-x-1 transition-transform">
+                        <span>เข้าสู่ห้องจัดการคุณครู</span>
+                        <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
+                    </div>
+                </div>
+
+                <!-- Card: Admin Portal -->
+                <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-xl hover:border-purple-300 transition-all duration-300 flex flex-col justify-between group cursor-pointer" onclick="showLoginTab('admin')">
+                    <div class="space-y-4">
+                        <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center group-hover:bg-purple-600 group-hover:text-white transition-all duration-300">
+                            <i class="fa-solid fa-user-shield text-2xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-800">ผู้ดูแลระบบ (Admin)</h3>
+                            <p class="text-slate-500 text-xs mt-1">กู้ข้อมูล สำรองฐานข้อมูลคะแนน ยืนยันและตรวจสอบการสมัครเข้าใช้บัญชีของคุณครูเพื่อความปลอดภัย</p>
+                        </div>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-slate-100 flex items-center text-sm font-semibold text-purple-600 group-hover:translate-x-1 transition-transform">
+                        <span>เข้าสู่ระบบแอดมินหลังบ้าน</span>
+                        <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Quick Info Block -->
+            <div class="bg-blue-50 border-l-4 border-blue-600 rounded-r-xl p-4 max-w-5xl mx-auto text-slate-700 text-xs sm:text-sm">
+                <div class="flex space-x-3">
+                    <i class="fa-solid fa-circle-info text-blue-600 mt-0.5 text-base"></i>
+                    <div>
+                        <span class="font-semibold block mb-0.5">คำชี้แจงเพื่อทดสอบการทำงานของระบบ:</span>
+                        <ul class="list-disc list-inside space-y-1 text-slate-600">
+                            <li><strong>นักเรียน:</strong> รหัสประจำตัวจริงตัวอย่างในห้อง ม.6/1 เช่น <code class="bg-blue-100 px-1 py-0.5 rounded text-blue-800 font-mono font-bold">26307</code> (นาย นิธิกร), <code class="bg-blue-100 px-1 py-0.5 rounded text-blue-800 font-mono font-bold">26532</code> (นาย ธเนศ)</li>
+                            <li><strong>คุณครู:</strong> บัญชีทดสอบใช้ได้เลยคือ Username: <code class="bg-blue-100 px-1 py-0.5 rounded text-blue-800 font-mono">teacher</code> รหัสผ่าน: <code class="bg-blue-100 px-1 py-0.5 rounded text-blue-800 font-mono">teacher123</code> (หรือจะลงทะเบียนสมัครครูท่านใหม่ก็ได้)</li>
+                            <li><strong>ผู้ดูแลระบบ (Admin):</strong> บัญชีคือ Username: <code class="bg-blue-100 px-1 py-0.5 rounded text-blue-800 font-mono">admin</code> รหัสผ่าน: <code class="bg-blue-100 px-1 py-0.5 rounded text-blue-800 font-mono">admin123</code></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= PAGE 2: LOGIN INTERFACE ================= -->
+        <section id="pageLogin" class="hidden max-w-md mx-auto py-12 animate-fade-in">
+            <div class="bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden">
+                <!-- Header Icon Accent -->
+                <div id="loginThemeBar" class="h-2 bg-blue-600"></div>
+                
+                <div class="p-8 space-y-6">
+                    <div class="flex justify-between items-center">
+                        <button onclick="goToHome()" class="text-slate-400 hover:text-slate-600 text-sm flex items-center gap-1">
+                            <i class="fa-solid fa-arrow-left"></i> ย้อนกลับ
+                        </button>
+                        <span id="loginRoleBadge" class="text-xs px-2.5 py-1 rounded-full font-semibold">นักเรียน</span>
+                    </div>
+
+                    <div class="text-center space-y-1.5">
+                        <h3 id="loginTitle" class="text-2xl font-bold text-slate-800">กรุณาล็อกอินเข้าระบบ</h3>
+                        <p id="loginSubtitle" class="text-xs text-slate-500">ใส่ข้อมูลของคุณเพื่อความปลอดภัยสูงสุดในการตรวจสอบข้อมูลคะแนน</p>
+                    </div>
+
+                    <!-- Display Feedback Box -->
+                    <div id="loginFeedback" class="hidden p-3 text-xs rounded-lg flex items-center gap-2"></div>
+
+                    <!-- Form for Student Login -->
+                    <div id="studentForm" class="space-y-4">
+                        <div class="space-y-1.5">
+                            <label for="studentIdInput" class="block text-xs font-semibold text-slate-700">เลขประจำตัวนักเรียน (5 หลัก)</label>
+                            <div class="relative rounded-lg shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                    <i class="fa-solid fa-id-card"></i>
+                                </div>
+                                <input type="text" id="studentIdInput" maxlength="10" placeholder="ระบุเลขประจำตัว เช่น 26307" class="block w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                            </div>
+                        </div>
+                        <button onclick="submitStudentLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-4 rounded-lg shadow-md transition-colors text-sm flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-magnifying-glass"></i> ค้นหาข้อมูลคะแนนของตนเอง
+                        </button>
+                    </div>
+
+                    <!-- Form for Teacher & Admin Login -->
+                    <div id="credentialForm" class="hidden space-y-4">
+                        <div class="space-y-1.5">
+                            <label for="usernameInput" class="block text-xs font-semibold text-slate-700">ชื่อผู้ใช้งาน (Username)</label>
+                            <div class="relative rounded-lg shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                    <i class="fa-solid fa-user"></i>
+                                </div>
+                                <input type="text" id="usernameInput" placeholder="ระบุชื่อผู้ใช้ของคุณ" class="block w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-500 text-sm">
+                            </div>
+                        </div>
+                        <div class="space-y-1.5">
+                            <label for="passwordInput" class="block text-xs font-semibold text-slate-700">รหัสผ่าน (Password)</label>
+                            <div class="relative rounded-lg shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                    <i class="fa-solid fa-lock"></i>
+                                </div>
+                                <input type="password" id="passwordInput" placeholder="••••••••" class="block w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-500 text-sm">
+                            </div>
+                        </div>
+                        
+                        <button id="credentialSubmitBtn" onclick="submitCredentialLogin()" class="w-full text-white font-bold py-2.5 px-4 rounded-lg shadow-md transition-colors text-sm flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-right-to-bracket"></i> ยืนยันตัวเพื่อเข้าสู่ระบบ
+                        </button>
+
+                        <!-- Extra Action: Register for Teacher only -->
+                        <div id="registerPrompt" class="text-center pt-2">
+                            <span class="text-xs text-slate-500">คุณครูท่านใหม่ยังไม่มีบัญชี?</span>
+                            <button onclick="toggleRegisterForm(true)" class="text-xs text-teal-600 hover:text-teal-800 font-bold ml-1">ลงทะเบียนขอสิทธิ์ใช้งาน</button>
+                        </div>
+                    </div>
+
+                    <!-- Register Form Section (Within Login container) -->
+                    <div id="registerForm" class="hidden space-y-4 pt-4 border-t border-slate-100">
+                        <div class="text-xs font-bold text-teal-800 bg-teal-50 p-2.5 rounded-lg border border-teal-200">
+                            ลงทะเบียนคุณครู (แอดมินจะต้องทำการตรวจสอบและกดยอมรับก่อนเท่านั้น จึงจะล็อกอินได้)
+                        </div>
+                        <div class="space-y-1.5">
+                            <label for="regNameInput" class="block text-xs font-semibold text-slate-700">ชื่อ-นามสกุลของคุณครู</label>
+                            <input type="text" id="regNameInput" placeholder="เช่น นางสาวอริสรา ดีเด่น" class="block w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500 text-xs">
+                        </div>
+                        <div class="space-y-1.5">
+                            <label for="regUsernameInput" class="block text-xs font-semibold text-slate-700">สร้างชื่อผู้ใช้ (Username)</label>
+                            <input type="text" id="regUsernameInput" placeholder="อักษรภาษาอังกฤษเท่านั้น" class="block w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500 text-xs">
+                        </div>
+                        <div class="space-y-1.5">
+                            <label for="regPasswordInput" class="block text-xs font-semibold text-slate-700">สร้างรหัสผ่าน (Password)</label>
+                            <input type="password" id="regPasswordInput" placeholder="ไม่ต่ำกว่า 6 ตัวอักษร" class="block w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500 text-xs">
+                        </div>
+                        <div class="flex space-x-2">
+                            <button onclick="toggleRegisterForm(false)" class="w-1/2 bg-slate-200 hover:bg-slate-300 text-slate-700 py-2 rounded-lg text-xs font-bold transition-colors">ยกเลิก</button>
+                            <button onclick="submitRegister()" class="w-1/2 bg-teal-600 hover:bg-teal-700 text-white py-2 rounded-lg text-xs font-bold shadow transition-colors">ส่งคำร้องขอสิทธิ์</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= PAGE 3: STUDENT PORTAL (VIEW SCORES) ================= -->
+        <section id="pageStudentPortal" class="hidden space-y-6 animate-fade-in">
+            <!-- Student Header Profile Card -->
+            <div class="bg-gradient-to-r from-blue-800 to-indigo-800 rounded-2xl p-6 text-white shadow-lg">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-white/20 p-3.5 rounded-2xl">
+                            <i class="fa-solid fa-id-badge text-3xl"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="bg-blue-600 text-xs px-2.5 py-0.5 rounded-full font-semibold">ข้อมูลนักเรียนรายบุคคล</span>
+                                <span id="studentCourseRoom" class="text-xs text-blue-200">ม.6/1</span>
+                            </div>
+                            <h3 id="studentNameDisplay" class="text-2xl font-bold mt-1">นาย นิธิกร มูลทองชุน</h3>
+                            <p class="text-xs text-blue-200 mt-1">
+                                <span class="mr-4"><strong>เลขประจำตัว:</strong> <span id="studentIdDisplay">26307</span></span>
+                                <span><strong>ครูที่ปรึกษา:</strong> <span id="studentAdvisorDisplay">นางสาวญาดา คำเอี่ยม, นางสาวภัคจิรา บวรธรรมรัตน์</span></span>
+                            </p>
+                        </div>
+                    </div>
+                    <button onclick="handleLogout()" class="self-stretch sm:self-auto bg-white/15 hover:bg-white/25 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-right-from-bracket"></i> ออกจากหน้ารายงานตัว
+                    </button>
+                </div>
+            </div>
+
+            <!-- Subject Selection Area & Quick Stats -->
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <!-- Subject selector sidebar -->
+                <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+                    <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2 pb-3 border-b border-slate-100">
+                        <i class="fa-solid fa-book-open text-blue-600"></i> เลือกรายวิชาเพื่อสืบค้นคะแนน
+                    </h4>
+                    <div id="studentSubjectList" class="space-y-2 max-h-80 overflow-y-auto pr-1">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Main Score Breakdown Area -->
+                <div class="lg:col-span-3 space-y-6">
+                    <!-- Score Details Card -->
+                    <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                        <div class="p-5 bg-slate-50 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                            <div>
+                                <h4 id="activeSubjectName" class="font-bold text-slate-800 text-base">วิชา: คณิต 1</h4>
+                                <p class="text-xs text-slate-500 mt-0.5">ผู้ประเมินหลัก: <span id="lastUpdatedByText">-</span></p>
+                            </div>
+                            <div class="text-xs bg-indigo-50 text-indigo-800 px-3 py-1 rounded-full font-semibold">
+                                อัปเดตล่าสุดเมื่อ: <span id="lastUpdatedTimeText">-</span>
+                            </div>
+                        </div>
+
+                        <!-- Highlight Stat Panel -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 border-b border-slate-100 text-center">
+                            <div class="p-4 border-r border-slate-100">
+                                <span class="text-xs text-slate-500 block mb-0.5">คะแนนเก็บระหว่างเรียน</span>
+                                <span id="statClassworkScore" class="text-xl font-bold text-blue-600">0.0 / 50</span>
+                            </div>
+                            <div class="p-4 border-r border-slate-100">
+                                <span class="text-xs text-slate-500 block mb-0.5">คะแนนสอบกลางภาค</span>
+                                <span id="statMidtermScore" class="text-xl font-bold text-indigo-600">0.0 / 20</span>
+                            </div>
+                            <div class="p-4 border-r border-slate-100">
+                                <span class="text-xs text-slate-500 block mb-0.5">คะแนนสอบปลายภาค</span>
+                                <span id="statFinalScore" class="text-xl font-bold text-purple-600">0.0 / 30</span>
+                            </div>
+                            <div class="p-4 bg-blue-50/50">
+                                <span class="text-xs text-slate-500 block mb-0.5 font-semibold">คะแนนรวมและเกรด</span>
+                                <span id="statTotalScore" class="text-xl font-black text-emerald-600">0.0</span>
+                                <span id="statGradeText" class="text-xs block text-slate-600 font-bold">(เกรด -)</span>
+                            </div>
+                        </div>
+
+                        <!-- Score Itemized Details -->
+                        <div class="p-5 space-y-4">
+                            <h5 class="text-xs font-bold text-slate-700 uppercase tracking-wider">รายละเอียดคะแนนย่อยเชิงลึก</h5>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <!-- Block 1: คะแนนสมุดและการเข้าเรียน -->
+                                <div class="bg-amber-50/40 rounded-xl p-4 border border-amber-100 space-y-2">
+                                    <div class="flex justify-between items-center text-amber-900 font-bold text-xs">
+                                        <span>คะแนนสมุดและการส่งงาน</span>
+                                        <span id="detailNotebookTitle" class="bg-amber-100 px-2 py-0.5 rounded text-amber-800 font-bold">0 คะแนน</span>
+                                    </div>
+                                    <p class="text-slate-500 text-[11px] leading-relaxed">คะแนนวัดความสม่ำเสมอในการนำเสนอผลงาน สมุดจด ความเป็นระเบียบวินัย และการเรียนรวมกัน (คะแนนเต็ม 50 คะแนนแปรผันตามครูผู้สอน)</p>
+                                </div>
+
+                                <!-- Block 2: คะแนนงาน/ใบงานย่อย -->
+                                <div class="bg-sky-50/40 rounded-xl p-4 border border-sky-100 space-y-2">
+                                    <div class="flex justify-between items-center text-sky-900 font-bold text-xs">
+                                        <span>คะแนนงาน / ใบงานกิจกรรม</span>
+                                        <span id="detailAssignmentTitle" class="bg-sky-100 px-2 py-0.5 rounded text-sky-800 font-bold">0 คะแนน</span>
+                                    </div>
+                                    <p class="text-slate-500 text-[11px] leading-relaxed">คะแนนสอบย่อย คะแนนการรวมกลุ่ม และงานกิจกรรมพิเศษภายในห้องเรียนที่ได้มอบหมายตลอดภาคเรียนนี้</p>
+                                </div>
+
+                                <!-- Block 3: คะแนนสอบหลัก -->
+                                <div class="bg-purple-50/40 rounded-xl p-4 border border-purple-100 space-y-2">
+                                    <div class="flex justify-between items-center text-purple-900 font-bold text-xs">
+                                        <span>การสอบข้อเขียนภาคทฤษฎี</span>
+                                        <span id="detailExamTitle" class="bg-purple-100 px-2 py-0.5 rounded text-purple-800 font-bold">0 คะแนน</span>
+                                    </div>
+                                    <p class="text-slate-500 text-[11px] leading-relaxed">คะแนนสอบกลางภาค (Midterm) คะแนนสอบปลายภาคเรียน (Final) ของวิชาซึ่งเป็นเกณฑ์แกนกลางร่วมของกลุ่มสาระ</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Feedback Section -->
+                    <div class="bg-indigo-50 rounded-2xl p-5 border border-indigo-100 flex items-start space-x-4">
+                        <div class="bg-indigo-600 text-white rounded-xl p-2.5 mt-0.5">
+                            <i class="fa-solid fa-comment-dots text-lg"></i>
+                        </div>
+                        <div class="space-y-1">
+                            <h4 class="font-bold text-indigo-900 text-sm">หมายเหตุความเข้าใจเรื่องเกรดเฉลี่ย:</h4>
+                            <p class="text-slate-600 text-xs leading-relaxed">
+                                ผลการเรียนดังกล่าวเป็นคะแนนเบื้องต้นที่ถูกบันทึกเข้าระบบออนไลน์ตามช่วงเวลาของสัปดาห์ปัจจุบันเท่านั้น หากคุณครูประจำวิชามีการปรับปรุง คะแนนจะมีการเปลี่ยนแปลงตามวันอัปเดตข้างต้น หากพบข้อมูลคลาดเคลื่อนหรือข้อซสัยในคะแนนย่อยสามารถติดต่อผู้สอนโดยตรง
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= PAGE 4: TEACHER DASHBOARD ================= -->
+        <section id="pageTeacherDashboard" class="hidden space-y-6 animate-fade-in">
+            <!-- Teacher Header Card -->
+            <div class="bg-gradient-to-r from-teal-800 to-emerald-800 rounded-2xl p-6 text-white shadow-lg">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-white/20 p-3.5 rounded-2xl">
+                            <i class="fa-solid fa-user-tie text-3xl"></i>
+                        </div>
+                        <div>
+                            <span class="bg-emerald-600 text-xs px-2.5 py-0.5 rounded-full font-semibold">ห้องครูผู้สอน / ผู้รับผิดชอบคะแนน</span>
+                            <h3 id="teacherNameDisplaySub" class="text-2xl font-bold mt-1">ยินดีต้อนรับ คุณครูผู้ใช้งาน</h3>
+                            <p class="text-xs text-teal-200 mt-1">คุณสามารถอัปเดตคะแนนผ่านฟอร์ม, อัปโหลดไฟล์ Excel คัดกรองรายวิชา และแก้ไขตารางคะแนนแบบเรียลไทม์</p>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap gap-2 w-full md:w-auto">
+                        <button onclick="openImportExcelModal()" class="flex-1 md:flex-none bg-yellow-500 hover:bg-yellow-600 text-slate-900 px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm">
+                            <i class="fa-solid fa-file-excel"></i> นำเข้าด้วย Excel / CSV
+                        </button>
+                        <button onclick="handleLogout()" class="flex-1 md:flex-none bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Operations Tabs & Filters -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+                <div class="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 pb-4 border-b border-slate-100">
+                    <div>
+                        <h4 class="font-bold text-slate-800 text-sm">ตัวเลือกการคัดกรองข้อมูลคะแนน</h4>
+                        <p class="text-xs text-slate-500">กรุณาเลือก ระดับชั้น ห้องเรียน และวิชาเพื่อดูและบันทึกคะแนน</p>
+                    </div>
+
+                    <!-- Filter Selectors -->
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-2 flex-1 max-w-4xl">
+                        <!-- Level -->
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">ระดับชั้น</label>
+                            <select id="filterLevel" onchange="onTeacherFilterChange()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                                <option value="6">มัธยมศึกษาปีที่ 6</option>
+                                <option value="5">มัธยมศึกษาปีที่ 5</option>
+                                <option value="4">มัธยมศึกษาปีที่ 4</option>
+                                <option value="3">มัธยมศึกษาปีที่ 3</option>
+                                <option value="2">มัธยมศึกษาปีที่ 2</option>
+                                <option value="1">มัธยมศึกษาปีที่ 1</option>
+                            </select>
+                        </div>
+                        <!-- Room -->
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">ห้องเรียน</label>
+                            <select id="filterRoom" onchange="onTeacherFilterChange()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                                <option value="1">ห้อง 1</option>
+                                <option value="2">ห้อง 2</option>
+                                <option value="3">ห้อง 3</option>
+                                <option value="4">ห้อง 4</option>
+                                <option value="5">ห้อง 5</option>
+                            </select>
+                        </div>
+                        <!-- Subject -->
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">รายวิชา</label>
+                            <select id="filterSubject" onchange="onTeacherFilterChange()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                                <option value="คณิต 1">คณิต 1</option>
+                                <option value="ฟิสิกส์ 1">ฟิสิกส์ 1</option>
+                                <option value="อังกฤษทั่วไป">อังกฤษทั่วไป</option>
+                                <option value="ภาษาไทยหลัก">ภาษาไทยหลัก</option>
+                            </select>
+                        </div>
+                        <!-- Search Name/ID -->
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">ค้นหาด่วน (ชื่อ/รหัส)</label>
+                            <input type="text" id="teacherSearchQuery" oninput="renderTeacherTable()" placeholder="ระบุชื่อหรือรหัส..." class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Teacher Table Info bar -->
+                <div class="flex flex-wrap justify-between items-center gap-2 text-xs text-slate-600">
+                    <div>
+                        แสดงรายชื่อห้องเรียน: <span class="font-bold text-emerald-800" id="currentSelectionLabel">ม.6/1 - วิชา คณิต 1</span> 
+                        (ครูที่ปรึกษา: <span id="currentSelectionAdvisors">-</span>)
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="flex items-center gap-1 text-slate-500">
+                            <span class="w-2.5 h-2.5 rounded-full bg-slate-200 inline-block"></span> ไม่พร้อมแก้ไข
+                        </span>
+                        <span class="flex items-center gap-1 text-emerald-600">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> ดับเบิ้ลคลิกเพื่อแก้ไข
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Main Grid Student List (Excel style editing) -->
+                <div class="overflow-x-auto border border-slate-200 rounded-xl shadow-inner bg-slate-50">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="bg-slate-100 border-b border-slate-200 text-slate-700">
+                                <th class="p-3 font-semibold text-center w-12">ที่</th>
+                                <th class="p-3 font-semibold w-24">รหัสประจำตัว</th>
+                                <th class="p-3 font-semibold">ชื่อ-นามสกุล</th>
+                                <th class="p-3 font-semibold text-center w-24 bg-blue-50/50">คะแนนสมุด (5)</th>
+                                <th class="p-3 font-semibold text-center w-24 bg-sky-50/50">คะแนนงาน (20)</th>
+                                <th class="p-3 font-semibold text-center w-24 bg-amber-50/50">สอบกลางภาค (20)</th>
+                                <th class="p-3 font-semibold text-center w-24 bg-purple-50/50">สอบปลายภาค (50)</th>
+                                <th class="p-3 font-semibold text-center w-24 bg-emerald-50/50">รวม (100)</th>
+                                <th class="p-3 font-semibold text-center w-16">เกรด</th>
+                                <th class="p-3 font-semibold text-center w-20">ดำเนินการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teacherStudentTableBody">
+                            <!-- Populated dynamic list of pupils -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Empty State for Table -->
+                <div id="teacherTableEmptyState" class="hidden text-center py-12 space-y-3 bg-slate-50 rounded-xl border-dashed border-2 border-slate-200">
+                    <i class="fa-regular fa-folder-open text-4xl text-slate-300"></i>
+                    <p class="text-sm text-slate-500">ไม่พบข้อมูลรายชื่อหรือคะแนนนักเรียนตามตัวกรองนี้</p>
+                    <button onclick="addNewStudentRow()" class="bg-teal-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-teal-700 transition">
+                        <i class="fa-solid fa-plus"></i> เพิ่มรายชื่อใหม่
+                    </button>
+                </div>
+
+                <!-- Footer Operations of Table -->
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-4 pt-4 border-t border-slate-100">
+                    <button onclick="addNewStudentRow()" class="w-full sm:w-auto bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-user-plus"></i> เพิ่มรายชื่อนักเรียนแถวใหม่
+                    </button>
+                    <span class="text-xs text-slate-500">
+                        * ระบบจะบันทึกคะแนนที่คุณพิมพ์โดยอัตโนมัติเมื่อกดปุ่ม <span class="bg-emerald-100 text-emerald-800 px-1 rounded font-bold">บันทึก</span> ท้ายแถว หรือสามารถอัปเดตยกชุดผ่านปุ่มนำเข้า Excel ด้านบน
+                    </span>
+                </div>
+            </div>
+
+            <!-- Audit trail of score updates for Teacher -->
+            <div class="bg-slate-100 rounded-2xl p-5 border border-slate-200 space-y-3">
+                <h4 class="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                    <i class="fa-solid fa-clock-rotate-left text-slate-500"></i> ประวัติความเคลื่อนไหวการกรอกและอัปเดตคะแนนล่าสุด (History Logs)
+                </h4>
+                <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+                    <div class="max-h-40 overflow-y-auto text-[11px] divide-y divide-slate-100" id="teacherLogsList">
+                        <!-- Populated dynamic updates logs -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= PAGE 5: ADMIN DASHBOARD ================= -->
+        <section id="pageAdminDashboard" class="hidden space-y-6 animate-fade-in">
+            <!-- Admin Profile Header -->
+            <div class="bg-gradient-to-r from-purple-800 to-indigo-900 rounded-2xl p-6 text-white shadow-lg">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-white/20 p-3.5 rounded-2xl">
+                            <i class="fa-solid fa-user-shield text-3xl"></i>
+                        </div>
+                        <div>
+                            <span class="bg-purple-600 text-xs px-2.5 py-0.5 rounded-full font-semibold">แผงควบคุมหลักผู้ดูแลระบบ (Admin Panel)</span>
+                            <h3 class="text-2xl font-bold mt-1">ยินดีต้อนรับ แอดมินผู้จัดการระบบ</h3>
+                            <p class="text-xs text-purple-200 mt-1">อนุมัติคุณครูตรวจสอบความปลอดภัย ตรวจสอบกิจกรรม และกู้คืนข้อมูลคะแนนเมื่อเกิดความผิดพลาด</p>
+                        </div>
+                    </div>
+                    <button onclick="handleLogout()" class="self-stretch sm:self-auto bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all">
+                        ออกจากระบบ
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Admin Grid Layout -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Column 1: Teacher Approval System -->
+                <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+                    <div class="pb-3 border-b border-slate-100">
+                        <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-user-check text-purple-600"></i> การอนุมัติการสมัครเข้าใช้ของคุณครู (Teacher Registrations)
+                        </h4>
+                        <p class="text-xs text-slate-500 mt-0.5">อนุมัติบัญชีเพื่อยอมให้คุณครูลงชื่อเข้าใช้แก้ไขข้อมูลคะแนนหลังบ้าน</p>
+                    </div>
+
+                    <div class="space-y-3 max-h-80 overflow-y-auto pr-1" id="adminTeacherApprovalList">
+                        <!-- Dynamic generated from array -->
+                    </div>
+                </div>
+
+                <!-- Column 2: System Backup and Database Restore -->
+                <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+                    <div class="pb-3 border-b border-slate-100">
+                        <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                            <i class="fa-solid fa-database text-blue-600"></i> ศูนย์กู้คืนฐานข้อมูล (Database Restore Points)
+                        </h4>
+                        <p class="text-xs text-slate-500 mt-0.5 font-semibold text-red-600">
+                            * ป้องกันคะแนนสูญหายหรือพิมพ์ผิด คุณสามารถกดย้อนข้อมูลกลับไปจุดประวัติที่มีการอัปเดตได้ที่นี่
+                        </p>
+                    </div>
+
+                    <div class="space-y-3 max-h-80 overflow-y-auto pr-1" id="adminRestorePointsList">
+                        <!-- Dynamic points from logs and state -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Data Inspector for Admin -->
+            <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
+                <div class="flex justify-between items-center pb-3 border-b border-slate-100">
+                    <div>
+                        <h4 class="font-bold text-slate-800 text-sm">ภาพรวมข้อมูลผู้ใช้งานในระบบ (Total Users)</h4>
+                        <p class="text-xs text-slate-500">บัญชีและสิทธิ์ทั้งหมดที่ถูกจัดเก็บภายใน Local Memory</p>
+                    </div>
+                    <button onclick="resetSystemDataToDefault()" class="bg-rose-100 hover:bg-rose-200 text-rose-800 text-xs px-3 py-1.5 rounded-lg font-bold transition-all">
+                        <i class="fa-solid fa-trash-can"></i> ล้างข้อมูลและตั้งค่าเริ่มต้นใหม่ทั้งหมด
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
+                    <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                        <span class="text-slate-500 text-xs block">นักเรียนชั้น ม.6/1 (มีฐานข้อมูลจริง)</span>
+                        <span id="adminStatStudents" class="text-xl font-bold text-blue-800">42 คน</span>
+                    </div>
+                    <div class="bg-teal-50/50 p-4 rounded-xl border border-teal-100">
+                        <span class="text-slate-500 text-xs block">คุณครูที่อนุมัติแล้ว</span>
+                        <span id="adminStatTeachers" class="text-xl font-bold text-teal-800">1 บัญชี</span>
+                    </div>
+                    <div class="bg-amber-50/50 p-4 rounded-xl border border-amber-100">
+                        <span class="text-slate-500 text-xs block">จำนวนรายวิชาทั้งหมด</span>
+                        <span id="adminStatSubjects" class="text-xl font-bold text-amber-800">4 วิชา</span>
+                    </div>
+                    <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
+                        <span class="text-slate-500 text-xs block">คะแนนที่มีประวัติบันทึก</span>
+                        <span id="adminStatScores" class="text-xl font-bold text-indigo-800">0 รายการ</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-6 border-t border-slate-800 text-xs">
+        <div class="max-w-7xl mx-auto px-4 text-center space-y-2">
+            <p>ระบบรายงานคะแนนนักเรียนออนไลน์ โรงเรียนบางมดวิทยา "สีสุกหวาดจวนอุปถัมภ์" แผนงานไอทีสถิติและเทคโนโลยี</p>
+            <p class="text-slate-600">© 2026 Bangmod Wittaya School. Built as High Performance Educational Web Tool</p>
+        </div>
+    </footer>
+
+    <!-- ================= MODAL: EXCEL / CSV IMPORT SYSTEM ================= -->
+    <div id="importExcelModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <!-- Header -->
+            <div class="p-5 bg-gradient-to-r from-teal-800 to-emerald-800 text-white flex justify-between items-center">
+                <div>
+                    <h3 class="text-base font-bold flex items-center gap-2">
+                        <i class="fa-solid fa-file-excel text-lg text-yellow-400"></i> นำเข้าด้วย Excel / CSV
+                    </h3>
+                    <p class="text-[11px] text-teal-200">ระบุปลายทาง และเลือกตารางเพื่อ Mapping คะแนนย่อย</p>
+                </div>
+                <button onclick="closeImportExcelModal()" class="text-white hover:text-slate-200">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Body (Scrollable) -->
+            <div class="p-6 space-y-5 overflow-y-auto flex-1 text-slate-700">
+                <!-- Selectors for target subject & room first -->
+                <div class="bg-teal-50/60 rounded-xl p-4 border border-teal-100 space-y-3">
+                    <span class="text-xs font-bold text-teal-900 block"><i class="fa-solid fa-bullseye"></i> 1. ตั้งเป้าหมายนำเข้าคะแนนชุดนี้ไปที่:</span>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="block text-[10px] text-slate-500 mb-0.5 font-semibold">ระดับชั้น</label>
+                            <select id="excelTargetLevel" class="w-full bg-white border border-slate-300 rounded px-2 py-1 text-xs">
+                                <option value="6">ม.6</option>
+                                <option value="5">ม.5</option>
+                                <option value="4">ม.4</option>
+                                <option value="3">ม.3</option>
+                                <option value="2">ม.2</option>
+                                <option value="1">ม.1</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-500 mb-0.5 font-semibold">ห้องเรียน</label>
+                            <select id="excelTargetRoom" class="w-full bg-white border border-slate-300 rounded px-2 py-1 text-xs">
+                                <option value="1">ห้อง 1</option>
+                                <option value="2">ห้อง 2</option>
+                                <option value="3">ห้อง 3</option>
+                                <option value="4">ห้อง 4</option>
+                                <option value="5">ห้อง 5</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-500 mb-0.5 font-semibold">วิชา</label>
+                            <select id="excelTargetSubject" class="w-full bg-white border border-slate-300 rounded px-2 py-1 text-xs">
+                                <option value="คณิต 1">คณิต 1</option>
+                                <option value="ฟิสิกส์ 1">ฟิสิกส์ 1</option>
+                                <option value="อังกฤษทั่วไป">อังกฤษทั่วไป</option>
+                                <option value="ภาษาไทยหลัก">ภาษาไทยหลัก</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dropzone Area -->
+                <div id="dropzone" class="border-2 border-dashed border-slate-300 hover:border-teal-500 hover:bg-slate-50 rounded-xl p-8 text-center cursor-pointer transition-all space-y-2 relative">
+                    <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleExcelFileSelect(event)">
+                    <div class="text-slate-400 text-3xl">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-slate-700">ลากไฟล์ Excel (.xlsx) หรือ .csv ของห้องเรียนมาวางที่นี่</p>
+                        <p class="text-[10px] text-slate-400">หรือคลิกเปิดกล่อง เพื่อเลือกไฟล์จากอุปกรณ์ของคุณ</p>
+                    </div>
+                    <button onclick="triggerExcelFileInput(event)" class="bg-teal-600 text-white font-bold text-[10px] py-1 px-3 rounded shadow-sm hover:bg-teal-700 transition">เลือกไฟล์</button>
+                </div>
+
+                <!-- Download Template Banner -->
+                <div class="bg-slate-50 p-3 rounded-lg flex justify-between items-center border border-slate-200 text-xs">
+                    <span class="text-slate-600 text-[11px]"><i class="fa-solid fa-circle-down"></i> แนะนำ: ดาวน์โหลดเทมเพลตตัวอย่างรายชื่อ ม.6/1 คอลัมน์ครบเป๊ะ</span>
+                    <button onclick="downloadSampleTemplate()" class="text-teal-600 hover:text-teal-800 font-bold flex items-center gap-1">
+                        <i class="fa-solid fa-download"></i> ดาวน์โหลด Template.xlsx
+                    </button>
+                </div>
+
+                <!-- Column Mapping Fields (Visible after reading excel) -->
+                <div id="mappingSection" class="hidden bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-3 animate-fade-in">
+                    <div class="flex justify-between items-center pb-2 border-b border-slate-200">
+                        <span class="text-xs font-bold text-slate-800"><i class="fa-solid fa-shuffle"></i> 2. การจับคู่หัวคอลัมน์ (Column Mapping)</span>
+                        <span class="bg-teal-100 text-teal-800 text-[9px] px-2 py-0.5 rounded font-bold">พบบันทึกจาก Excel แล้ว</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 text-xs">
+                        <div class="space-y-1">
+                            <label class="block text-[10px] text-slate-500 font-bold uppercase">จับคู่: คอลัมน์เลขประจำตัว</label>
+                            <select id="mapIdCol" class="w-full bg-white border border-slate-300 rounded p-1.5 text-xs"></select>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block text-[10px] text-slate-500 font-bold uppercase">จับคู่: คะแนนสมุด</label>
+                            <select id="mapNotebookCol" class="w-full bg-white border border-slate-300 rounded p-1.5 text-xs"></select>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block text-[10px] text-slate-500 font-bold uppercase">จับคู่: คะแนนงาน</label>
+                            <select id="mapAssignmentCol" class="w-full bg-white border border-slate-300 rounded p-1.5 text-xs"></select>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block text-[10px] text-slate-500 font-bold uppercase">จับคู่: คะแนนสอบกลางภาค</label>
+                            <select id="mapMidtermCol" class="w-full bg-white border border-slate-300 rounded p-1.5 text-xs"></select>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="block text-[10px] text-slate-500 font-bold uppercase">จับคู่: คะแนนสอบปลายภาค</label>
+                            <select id="mapFinalCol" class="w-full bg-white border border-slate-300 rounded p-1.5 text-xs"></select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview Grid after Mapping selection -->
+                <div id="importPreviewSection" class="hidden space-y-2 animate-fade-in">
+                    <span class="text-xs font-bold text-slate-800 block"><i class="fa-solid fa-list-check"></i> 3. ตารางพรีวิวก่อนกดนำเข้าบันทึกจริง:</span>
+                    <div class="overflow-x-auto border border-slate-200 rounded-xl max-h-48 text-[11px] bg-slate-100 shadow-inner">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-200 sticky top-0 border-b border-slate-300 text-slate-600">
+                                    <th class="p-2 font-bold w-12 text-center">แถวที่</th>
+                                    <th class="p-2 font-bold w-24">รหัสประจำตัว</th>
+                                    <th class="p-2 font-bold">ชื่อ (พิจารณาจากรหัสในฐานจริง)</th>
+                                    <th class="p-2 font-bold text-center w-14">สมุด</th>
+                                    <th class="p-2 font-bold text-center w-14">งาน</th>
+                                    <th class="p-2 font-bold text-center w-14">กลางภาค</th>
+                                    <th class="p-2 font-bold text-center w-14">ปลายภาค</th>
+                                    <th class="p-2 font-bold text-center w-14 text-emerald-800">รวม</th>
+                                </tr>
+                            </thead>
+                            <tbody id="importPreviewTableBody" class="bg-white">
+                                <!-- Generated list of Excel records -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="text-[10px] text-slate-400 leading-tight">
+                        * ระบบตรวจความตรงกันของรหัสประจำตัว หากไม่พบรหัสประจำตัวในระบบหรือรหัสข้ามไป แถวนั้นจะถูกเตือนและไม่บันทึกเข้ามาในฐานข้อมูลของรายชื่อนักเรียนหลัก
+                    </p>
+                </div>
+
+            </div>
+
+            <!-- Footer Buttons -->
+            <div class="p-5 bg-slate-50 border-t border-slate-200 flex justify-end space-x-2">
+                <button onclick="closeImportExcelModal()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold px-4 py-2 rounded-xl text-xs transition">
+                    ยกเลิก
+                </button>
+                <button id="confirmImportExcelBtn" onclick="executeExcelImport()" disabled class="bg-teal-600 hover:bg-teal-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-semibold px-4 py-2 rounded-xl text-xs transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-file-import"></i> ยืนยันบันทึกคะแนนเข้าระบบ
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ================= JAVASCRIPT APP LOGIC ================= -->
+    <script>
+        // ================= GLOBAL STATES & IN-MEMORY DATABASE =================
+        const APP_STATE = {
+            currentRole: 'student', // student, teacher, admin
+            currentUser: null,      // Stores details of logged-in user
+            
+            // Raw Pupil Database - Populated default values with Actual list from ม.6/1 (uploaded)
+            students: [
+                { id: "26307", prefix: "นาย", firstname: "นิธิกร", lastname: "มูลทองชุน", level: "6", room: "1" },
+                { id: "26532", prefix: "นาย", firstname: "ธเนศ", lastname: "เปรมสมาน", level: "6", room: "1" },
+                { id: "26687", prefix: "นาย", firstname: "ก้องภพ", lastname: "เตชะเชี่ยวณรงค์", level: "6", room: "1" },
+                { id: "26694", prefix: "นาย", firstname: "ธนกฤต", lastname: "แซ่จ๋าว", level: "6", room: "1" },
+                { id: "26696", prefix: "นาย", firstname: "ธัชชัย", lastname: "วัฒนวงษ์", level: "6", room: "1" },
+                { id: "26709", prefix: "นาย", firstname: "พีระวัฒน์", ทวีโศภีพล: "ทวีโศภีพล", firstname: "พีระวัฒน์", lastname: "ทวีโศภีพล", level: "6", room: "1" },
+                { id: "26710", prefix: "นาย", firstname: "รัฐศาสตร์", lastname: "จิตเงิน", level: "6", room: "1" },
+                { id: "28153", prefix: "นาย", firstname: "ณัชพล", lastname: "ศรีบานเย็น", level: "6", room: "1" },
+                { id: "28154", prefix: "นาย", firstname: "อธิพงค์", lastname: "บุญลิเดช", level: "6", room: "1" },
+                { id: "28155", prefix: "นาย", firstname: "อภิวัฒน์", lastname: "สีสมุทร", level: "6", room: "1" },
+                { id: "26320", prefix: "นางสาว", firstname: "ธนพร", lastname: "สาทิพย์จันทร์", level: "6", room: "1" },
+                { id: "26330", prefix: "นางสาว", firstname: "ปภานัน", lastname: "มีพัด", level: "6", room: "1" },
+                { id: "26335", prefix: "นางสาว", firstname: "รวินท์นิภา", lastname: "เพชรหล้า", level: "6", room: "1" },
+                { id: "26391", prefix: "นางสาว", firstname: "ฐิติกาญจน์", lastname: "วงษ์สุรินทร์", level: "6", room: "1" },
+                { id: "26393", prefix: "นางสาว", firstname: "ณัฐธิชา", lastname: "เกษรจันทร์", level: "6", room: "1" },
+                { id: "26394", prefix: "นางสาว", firstname: "ณัฐวดี", lastname: "นำภา", level: "6", room: "1" },
+                { id: "26605", prefix: "นางสาว", firstname: "เบญจพร", lastname: "กล่ำม่วง", level: "6", room: "1" },
+                { id: "26606", prefix: "นางสาว", firstname: "เยาวลักษณ์", lastname: "ภูชายธง", level: "6", room: "1" },
+                { id: "26607", prefix: "นางสาว", firstname: "ปรีชญา", lastname: "เรืองสคราญ", level: "6", room: "1" },
+                { id: "26620", prefix: "นางสาว", firstname: "นิรชา", lastname: "ปุงบางกะดี่", level: "6", room: "1" },
+                { id: "26697", prefix: "นางสาว", firstname: "กมลชนก", lastname: "อัมพลพ", level: "6", room: "1" },
+                { id: "26699", prefix: "นางสาว", firstname: "ณัฐณิชา", lastname: "แจ่มจันทร์ศรี", level: "6", room: "1" },
+                { id: "26700", prefix: "นางสาว", firstname: "พรรษา", lastname: "ชนะมี", level: "6", room: "1" },
+                { id: "26701", prefix: "นางสาว", firstname: "พรสรรค์", lastname: "สำราญเงิน", level: "6", room: "1" },
+                { id: "26702", prefix: "นางสาว", firstname: "พัฒน์นรี", lastname: "คุณวัฒนาพร", level: "6", room: "1" },
+                { id: "26703", prefix: "นางสาว", firstname: "พิชชาพร", lastname: "พิแก้วบุตร", level: "6", room: "1" },
+                { id: "26704", prefix: "นางสาว", firstname: "เพ็ญพิชชา", lastname: "วารีแสงทิพย์", level: "6", room: "1" },
+                { id: "26715", prefix: "นางสาว", firstname: "แพนธิชา", lastname: "เหลาจำเริญ", level: "6", room: "1" },
+                { id: "26716", prefix: "นางสาว", firstname: "รังสิยาภรณ์", lastname: "สายโสภา", level: "6", room: "1" },
+                { id: "26717", prefix: "นางสาว", firstname: "รัตนกมล", lastname: "ผกายมาศกุล", level: "6", room: "1" },
+                { id: "26718", prefix: "นางสาว", firstname: "วรัญญา", lastname: "คำทอง", level: "6", room: "1" },
+                { id: "26720", prefix: "นางสาว", firstname: "ศดานันท์", lastname: "รื่นสุคนธ์", level: "6", room: "1" },
+                { id: "26722", prefix: "นางสาว", firstname: "สตางค์", lastname: "จุลชาตรี", level: "6", room: "1" },
+                { id: "28156", prefix: "นางสาว", firstname: "เกศิณี", lastname: "ชุ่มนาเสียว", level: "6", room: "1" },
+                { id: "28157", prefix: "นางสาว", firstname: "ณัฐณิชา", lastname: "จันทรวงค์", level: "6", room: "1" },
+                { id: "28158", prefix: "นางสาว", firstname: "ธันยพร", lastname: "ปรีหะจินดา", level: "6", room: "1" },
+                { id: "28159", prefix: "นางสาว", firstname: "นฤมาศ", lastname: "แก่นพุทรา", level: "6", room: "1" },
+                { id: "28160", prefix: "นางสาว", firstname: "บุษรินทร์", lastname: "ช้างจันทร์", level: "6", room: "1" },
+                { id: "28161", prefix: "นางสาว", firstname: "ปวันรัตน์", lastname: "ชื่นรัมย์", level: "6", room: "1" },
+                { id: "28162", prefix: "นางสาว", firstname: "ผกาพร", lastname: "บังคม", level: "6", room: "1" },
+                { id: "28806", prefix: "นางสาว", firstname: "พัชราภา", lastname: "จันทกล", level: "6", room: "1" },
+                { id: "28807", prefix: "นางสาว", firstname: "ธนภรณ์", lastname: "อินคำ", level: "6", room: "1" }
+            ],
+
+            // Score Database: Keeps grades. Map structure key: "{studentId}_{subjectName}"
+            scores: {},
+
+            // Teachers lists & Approval system
+            teachers: [
+                { username: 'teacher', password: 'teacher123', fullname: 'ครูสมปอง วิเศษสุข', approved: true }
+            ],
+
+            // Active Student Selection for viewing scores
+            studentPortalActiveSubject: 'คณิต 1',
+
+            // Database Restore points (Backup system)
+            restorePoints: [],
+
+            // Audit update logs
+            logs: []
+        };
+
+        // Static configuration mapping for level room advisors
+        const ROOM_ADVISORS = {
+            "6_1": "นางสาวญาดา คำเอี่ยม, นางสาวภัคจิรา บวรธรรมรัตน์",
+            "6_2": "นายทวีศักดิ์ วรเดช, นางศิรินทรา มีธรรม",
+            "5_1": "นางวิลาวัลย์ สมใจ, นายอภิเดช เกษม",
+            "1_1": "นางสุดาพร พันธ์ทอง, นางสมศรี ยินดี"
+        };
+
+        const SUBJECT_LIST = ["คณิต 1", "ฟิสิกส์ 1", "อังกฤษทั่วไป", "ภาษาไทยหลัก"];
+
+        // Temporary storage for reading excel
+        let parsedExcelData = null;
+        let excelHeaders = [];
+
+        // ================= CONSTRUTOR: INITIAL STATE RECOVERY =================
+        window.addEventListener('load', () => {
+            // Check if there is data in localStorage (Optional fallback, but fully in memory first)
+            initializeDefaultScores();
+            createInitialRestorePoint("เปิดระบบครั้งแรก");
+            goToHome();
+        });
+
+        // Generate dummy scores for initial test to make it look full!
+        function initializeDefaultScores() {
+            const defaultSubjects = ["คณิต 1", "ฟิสิกส์ 1", "อังกฤษทั่วไป", "ภาษาไทยหลัก"];
+            
+            APP_STATE.students.forEach(student => {
+                defaultSubjects.forEach(subject => {
+                    const key = `${student.id}_${subject}`;
+                    // Random grades for natural simulation
+                    const book = Math.floor(Math.random() * 6); // 0-5
+                    const work = Math.floor(Math.random() * 11) + 10; // 10-20
+                    const midterm = Math.floor(Math.random() * 11) + 10; // 10-20
+                    const final = Math.floor(Math.random() * 21) + 30; // 30-50
+                    const total = book + work + midterm + final;
+                    
+                    APP_STATE.scores[key] = {
+                        studentId: student.id,
+                        subject: subject,
+                        notebook: book,
+                        assignment: work,
+                        midterm: midterm,
+                        final: final,
+                        total: total,
+                        grade: calculateGrade(total),
+                        updatedBy: "ระบบอัตโนมัติ",
+                        updatedAt: new Date().toLocaleString('th-TH')
+                    };
+                });
+            });
+            APP_STATE.logs.push({
+                timestamp: new Date().toLocaleTimeString('th-TH'),
+                action: "ระบบเริ่มต้น",
+                description: "สร้างตารางคะแนนและสืบค้นจำลอง ม.6/1 ครบทั้ง 4 วิชาหลักสำเร็จ"
+            });
+        }
+
+        // Calculation of Grade formula
+        function calculateGrade(score) {
+            if (score >= 80) return "4.0";
+            if (score >= 75) return "3.5";
+            if (score >= 70) return "3.0";
+            if (score >= 65) return "2.5";
+            if (score >= 60) return "2.0";
+            if (score >= 55) return "1.5";
+            if (score >= 50) return "1.0";
+            return "0";
+        }
+
+        // ================= SYSTEM NAVIGATION CONTROLLER =================
+        function hideAllPages() {
+            document.getElementById('pageHome').classList.add('hidden');
+            document.getElementById('pageLogin').classList.add('hidden');
+            document.getElementById('pageStudentPortal').classList.add('hidden');
+            document.getElementById('pageTeacherDashboard').classList.add('hidden');
+            document.getElementById('pageAdminDashboard').classList.add('hidden');
+            
+            // hide feedback
+            const feedback = document.getElementById('loginFeedback');
+            feedback.classList.add('hidden');
+            feedback.className = "hidden p-3 text-xs rounded-lg flex items-center gap-2";
+        }
+
+        function goToHome() {
+            hideAllPages();
+            document.getElementById('pageHome').classList.remove('hidden');
+            document.getElementById('userBadge').classList.add('hidden');
+            document.getElementById('logoutBtn').classList.add('hidden');
+            APP_STATE.currentUser = null;
+        }
+
+        // Show standard Login Tab depending on the user selection
+        function showLoginTab(role) {
+            hideAllPages();
+            APP_STATE.currentRole = role;
+            
+            const page = document.getElementById('pageLogin');
+            page.classList.remove('hidden');
+            
+            const themeBar = document.getElementById('loginThemeBar');
+            const roleBadge = document.getElementById('loginRoleBadge');
+            const submitBtn = document.getElementById('credentialSubmitBtn');
+            const title = document.getElementById('loginTitle');
+            const subtitle = document.getElementById('loginSubtitle');
+            
+            const studentForm = document.getElementById('studentForm');
+            const credentialForm = document.getElementById('credentialForm');
+            const registerPrompt = document.getElementById('registerPrompt');
+            const registerForm = document.getElementById('registerForm');
+            
+            // Clean values
+            document.getElementById('studentIdInput').value = "";
+            document.getElementById('usernameInput').value = "";
+            document.getElementById('passwordInput').value = "";
+            registerForm.classList.add('hidden');
+
+            if (role === 'student') {
+                themeBar.className = "h-2 bg-blue-600";
+                roleBadge.className = "text-xs px-2.5 py-1 rounded-full font-semibold bg-blue-100 text-blue-800";
+                roleBadge.innerText = "นักเรียน (Student)";
+                title.innerText = "ตรวจสอบคะแนนด้วยรหัส";
+                subtitle.innerText = "ป้อนเลขประจำตัวนักเรียนของคุณ เพื่อเข้าสืบค้นเกรดรายบุคคล";
+                
+                studentForm.classList.remove('hidden');
+                credentialForm.classList.add('hidden');
+            } else if (role === 'teacher') {
+                themeBar.className = "h-2 bg-teal-600";
+                roleBadge.className = "text-xs px-2.5 py-1 rounded-full font-semibold bg-teal-100 text-teal-800";
+                roleBadge.innerText = "คุณครูผู้จัดการ (Teacher)";
+                submitBtn.className = "w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-2.5 px-4 rounded-lg shadow-md transition-colors text-sm flex items-center justify-center gap-2";
+                title.innerText = "ล็อกอินคุณครูผู้สอน";
+                subtitle.innerText = "กรุณากรอก Username & Password เพื่อเข้าสู่หน้าอัปเดตคะแนน";
+                
+                studentForm.classList.add('hidden');
+                credentialForm.classList.remove('hidden');
+                registerPrompt.classList.remove('hidden');
+            } else if (role === 'admin') {
+                themeBar.className = "h-2 bg-purple-600";
+                roleBadge.className = "text-xs px-2.5 py-1 rounded-full font-semibold bg-purple-100 text-purple-800";
+                roleBadge.innerText = "แอดมินระบบ (Admin)";
+                submitBtn.className = "w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2.5 px-4 rounded-lg shadow-md transition-colors text-sm flex items-center justify-center gap-2";
+                title.innerText = "สิทธิ์ผู้ดูแลระบบ";
+                subtitle.innerText = "สำหรับเจ้าหน้าที่สารสนเทศเพื่อทำการอนุมัติสิทธิ์ครูและย้อนข้อมูลกู้คืนคะแนน";
+                
+                studentForm.classList.add('hidden');
+                credentialForm.classList.remove('hidden');
+                registerPrompt.classList.add('hidden');
+            }
+        }
+
+        // Toggle register fields inside teacher login
+        function toggleRegisterForm(show) {
+            const form = document.getElementById('registerForm');
+            if (show) {
+                form.classList.remove('hidden');
+                document.getElementById('regNameInput').value = "";
+                document.getElementById('regUsernameInput').value = "";
+                document.getElementById('regPasswordInput').value = "";
+            } else {
+                form.classList.add('hidden');
+            }
+        }
+
+        // Show Custom Feedback message (replace browser alerts)
+        function showFeedback(text, isError = false) {
+            const container = document.getElementById('loginFeedback');
+            container.classList.remove('hidden');
+            if (isError) {
+                container.className = "p-3 text-xs rounded-lg flex items-center gap-2 bg-rose-50 border border-rose-200 text-rose-800 animate-pulse";
+                container.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> <span>${text}</span>`;
+            } else {
+                container.className = "p-3 text-xs rounded-lg flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-800";
+                container.innerHTML = `<i class="fa-solid fa-circle-check"></i> <span>${text}</span>`;
+            }
+        }
+
+        // ================= AUTHENTICATION ACTIONS =================
+        function submitStudentLogin() {
+            const inputVal = document.getElementById('studentIdInput').value.trim();
+            if (!inputVal) {
+                showFeedback("กรุณาระบุเลขประจำตัวนักเรียนก่อนทำการค้นหาครับ", true);
+                return;
+            }
+
+            // Find student in local array
+            const student = APP_STATE.students.find(s => s.id === inputVal);
+            if (!student) {
+                showFeedback("ไม่พบเลขประจำตัวนักเรียนนี้ในฐานข้อมูลโรงเรียน (ตัวอย่าง: 26307, 26532)", true);
+                return;
+            }
+
+            // Login Student successfully
+            APP_STATE.currentUser = student;
+            APP_STATE.currentRole = 'student';
+            
+            // Set navbar state
+            document.getElementById('userBadge').classList.remove('hidden');
+            document.getElementById('userBadgeText').innerText = `นักเรียน: ${student.prefix}${student.firstname}`;
+            document.getElementById('logoutBtn').classList.remove('hidden');
+            
+            // Direct to Portal
+            hideAllPages();
+            document.getElementById('pageStudentPortal').classList.remove('hidden');
+            
+            // Load student profile UI
+            renderStudentDashboard();
+        }
+
+        function submitCredentialLogin() {
+            const userVal = document.getElementById('usernameInput').value.trim();
+            const passVal = document.getElementById('passwordInput').value.trim();
+            
+            if (!userVal || !passVal) {
+                showFeedback("กรุณากรอก Username และ Password ให้ครบถ้วน", true);
+                return;
+            }
+
+            if (APP_STATE.currentRole === 'teacher') {
+                // Check in teachers database
+                const found = APP_STATE.teachers.find(t => t.username === userVal);
+                if (!found) {
+                    showFeedback("ไม่พบชื่อผู้ใช้งานนี้ในสิทธิ์คุณครู", true);
+                    return;
+                }
+                if (found.password !== passVal) {
+                    showFeedback("รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง", true);
+                    return;
+                }
+                if (!found.approved) {
+                    showFeedback("บัญชีของคุณอยู่ระหว่างรอ 'แอดมิน' ตรวจสอบและกดยืนยันอนุมัติ", true);
+                    return;
+                }
+
+                // Authorized
+                APP_STATE.currentUser = found;
+                document.getElementById('userBadge').classList.remove('hidden');
+                document.getElementById('userBadgeText').innerText = `${found.fullname}`;
+                document.getElementById('logoutBtn').classList.remove('hidden');
+                
+                hideAllPages();
+                document.getElementById('pageTeacherDashboard').classList.remove('hidden');
+                renderTeacherDashboard();
+
+            } else if (APP_STATE.currentRole === 'admin') {
+                // Check Admin fixed password
+                if (userVal === 'admin' && passVal === 'admin123') {
+                    APP_STATE.currentUser = { fullname: 'ผู้ดูแลระบบสูงสุด', role: 'admin' };
+                    document.getElementById('userBadge').classList.remove('hidden');
+                    document.getElementById('userBadgeText').innerText = "ผู้ดูแลระบบ (Admin)";
+                    document.getElementById('logoutBtn').classList.remove('hidden');
+                    
+                    hideAllPages();
+                    document.getElementById('pageAdminDashboard').classList.remove('hidden');
+                    renderAdminDashboard();
+                } else {
+                    showFeedback("รหัสผ่านผู้ดูแลระบบ (Admin) ไม่ถูกต้อง", true);
+                }
+            }
+        }
+
+        function submitRegister() {
+            const fullname = document.getElementById('regNameInput').value.trim();
+            const username = document.getElementById('regUsernameInput').value.trim();
+            const password = document.getElementById('regPasswordInput').value.trim();
+
+            if (!fullname || !username || !password) {
+                showFeedback("กรุณากรอกข้อมูลขอสมัครใช้งานให้ครบถ้วนทุกช่อง", true);
+                return;
+            }
+
+            if (APP_STATE.teachers.some(t => t.username === username)) {
+                showFeedback("Username นี้มีอยู่ในระบบหรืออยู่ระหว่างรออนุมัติแล้ว", true);
+                return;
+            }
+
+            // Insert wait list
+            APP_STATE.teachers.push({
+                username,
+                password,
+                fullname,
+                approved: false
+            });
+
+            showFeedback("ส่งคำร้องสำเร็จ! กรุณาให้ 'แอดมิน' ทำการเข้าสู่ระบบเพื่อกด Approve อนุมัติสิทธิ์คุณครูท่านนี้");
+            toggleRegisterForm(false);
+        }
+
+        function handleLogout() {
+            goToHome();
+        }
+
+        // ================= STUDENT LOGIC & RENDERER =================
+        function renderStudentDashboard() {
+            const student = APP_STATE.currentUser;
+            if (!student) return;
+
+            // Fill header info
+            document.getElementById('studentNameDisplay').innerText = `${student.prefix} ${student.firstname} ${student.lastname}`;
+            document.getElementById('studentIdDisplay').innerText = student.id;
+            
+            const roomKey = `${student.level}_${student.room}`;
+            document.getElementById('studentCourseRoom').innerText = `นักเรียนชั้น ม.${student.level}/${student.room}`;
+            document.getElementById('studentAdvisorDisplay').innerText = ROOM_ADVISORS[roomKey] || "ไม่ระบุ";
+
+            // Populate subjects
+            const listContainer = document.getElementById('studentSubjectList');
+            listContainer.innerHTML = "";
+
+            SUBJECT_LIST.forEach(sub => {
+                const isSelected = sub === APP_STATE.studentPortalActiveSubject;
+                const activeClasses = isSelected ? 
+                    'bg-blue-600 text-white shadow-md font-bold' : 
+                    'bg-slate-50 hover:bg-slate-100 text-slate-700 font-medium border border-slate-200';
+                
+                const btn = document.createElement('button');
+                btn.className = `w-full text-left px-4 py-2.5 rounded-xl text-xs flex justify-between items-center transition-all ${activeClasses}`;
+                btn.innerHTML = `
+                    <span><i class="fa-solid fa-book mr-1.5"></i> ${sub}</span>
+                    <i class="fa-solid fa-chevron-right text-[10px] opacity-70"></i>
+                `;
+                btn.onclick = () => {
+                    APP_STATE.studentPortalActiveSubject = sub;
+                    renderStudentDashboard();
+                };
+                listContainer.appendChild(btn);
+            });
+
+            // Display selected score details
+            displayStudentScores();
+        }
+
+        function displayStudentScores() {
+            const student = APP_STATE.currentUser;
+            const sub = APP_STATE.studentPortalActiveSubject;
+            const scoreKey = `${student.id}_${sub}`;
+            
+            document.getElementById('activeSubjectName').innerText = `รายวิชา: ${sub}`;
+
+            const record = APP_STATE.scores[scoreKey];
+            if (record) {
+                document.getElementById('lastUpdatedByText').innerText = record.updatedBy || "คุณครูผู้ประเมิน";
+                document.getElementById('lastUpdatedTimeText').innerText = record.updatedAt || "-";
+
+                // Score items
+                document.getElementById('statClassworkScore').innerText = `${(record.notebook + record.assignment).toFixed(1)} / 50`;
+                document.getElementById('statMidtermScore').innerText = `${record.midterm.toFixed(1)} / 20`;
+                document.getElementById('statFinalScore').innerText = `${record.final.toFixed(1)} / 30`;
+                
+                const total = record.notebook + record.assignment + record.midterm + record.final;
+                document.getElementById('statTotalScore').innerText = `${total.toFixed(1)} คะแนน`;
+                
+                const grade = record.grade;
+                let colorClass = "text-emerald-600";
+                if (grade === "0") colorClass = "text-rose-600";
+                else if (parseFloat(grade) < 2.0) colorClass = "text-yellow-600";
+                
+                const gradeLabel = document.getElementById('statGradeText');
+                gradeLabel.className = `text-xs block font-extrabold ${colorClass}`;
+                gradeLabel.innerText = `(ประเมินผลสัมฤทธิ์เกรด: ${grade})`;
+
+                // Set breakdowns inside text block
+                document.getElementById('detailNotebookTitle').innerText = `${record.notebook} / 10 คะแนน`;
+                document.getElementById('detailAssignmentTitle').innerText = `${record.assignment} / 40 คะแนน`;
+                document.getElementById('detailExamTitle').innerText = `กลางภาค: ${record.midterm} | ปลายภาค: ${record.final}`;
+            } else {
+                // If not found (newly added pupil)
+                document.getElementById('lastUpdatedByText').innerText = "-";
+                document.getElementById('lastUpdatedTimeText').innerText = "ไม่มีบันทึกข้อมูล";
+                document.getElementById('statClassworkScore').innerText = "0.0 / 50";
+                document.getElementById('statMidtermScore').innerText = "0.0 / 20";
+                document.getElementById('statFinalScore').innerText = "0.0 / 30";
+                document.getElementById('statTotalScore').innerText = "0.0 คะแนน";
+                document.getElementById('statGradeText').innerText = "(ไม่มีคะแนนเกรด)";
+                
+                document.getElementById('detailNotebookTitle').innerText = "0 / 10";
+                document.getElementById('detailAssignmentTitle').innerText = "0 / 40";
+                document.getElementById('detailExamTitle').innerText = "กลางภาค: 0 | ปลายภาค: 0";
+            }
+        }
+
+
+        // ================= TEACHER LOGIC & EDITOR =================
+        function renderTeacherDashboard() {
+            // Dropdowns defaults
+            onTeacherFilterChange();
+            renderTeacherLogs();
+        }
+
+        function onTeacherFilterChange() {
+            const level = document.getElementById('filterLevel').value;
+            const room = document.getElementById('filterRoom').value;
+            const subject = document.getElementById('filterSubject').value;
+
+            const roomKey = `${level}_${room}`;
+            document.getElementById('currentSelectionLabel').innerText = `ม.${level}/${room} - รายวิชา ${subject}`;
+            document.getElementById('currentSelectionAdvisors').innerText = ROOM_ADVISORS[roomKey] || "ไม่ระบุครูที่ปรึกษา";
+
+            renderTeacherTable();
+        }
+
+        function renderTeacherTable() {
+            const level = document.getElementById('filterLevel').value;
+            const room = document.getElementById('filterRoom').value;
+            const subject = document.getElementById('filterSubject').value;
+            const search = document.getElementById('teacherSearchQuery').value.toLowerCase().trim();
+
+            const tableBody = document.getElementById('teacherStudentTableBody');
+            const emptyState = document.getElementById('teacherTableEmptyState');
+            tableBody.innerHTML = "";
+
+            // Filter students matching classroom
+            let filteredStudents = APP_STATE.students.filter(s => s.level === level && s.room === room);
+
+            // Apply text search on name or id
+            if (search) {
+                filteredStudents = filteredStudents.filter(s => 
+                    s.id.includes(search) || 
+                    s.firstname.toLowerCase().includes(search) || 
+                    s.lastname.toLowerCase().includes(search)
+                );
+            }
+
+            if (filteredStudents.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            filteredStudents.forEach((student, index) => {
+                const scoreKey = `${student.id}_${subject}`;
+                let record = APP_STATE.scores[scoreKey];
+
+                if (!record) {
+                    // Create dummy blank record
+                    record = {
+                        studentId: student.id,
+                        subject: subject,
+                        notebook: 0,
+                        assignment: 0,
+                        midterm: 0,
+                        final: 0,
+                        total: 0,
+                        grade: "0",
+                        updatedBy: "-",
+                        updatedAt: "-"
+                    };
+                }
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 border-b border-slate-200 transition-colors";
+                tr.innerHTML = `
+                    <td class="p-3 text-center text-slate-400 font-mono">${index + 1}</td>
+                    <td class="p-3 font-semibold text-slate-800 font-mono">${student.id}</td>
+                    <td class="p-3 font-semibold text-slate-800">${student.prefix}${student.firstname} ${student.lastname}</td>
+                    
+                    <!-- Editable Fields -->
+                    <td class="p-2 bg-blue-50/20 text-center">
+                        <input type="number" min="0" max="10" value="${record.notebook}" id="nb_${student.id}" class="w-16 bg-white border border-slate-300 rounded text-center py-1 font-semibold text-blue-900 focus:ring-2 focus:ring-teal-500">
+                    </td>
+                    <td class="p-2 bg-sky-50/20 text-center">
+                        <input type="number" min="0" max="40" value="${record.assignment}" id="as_${student.id}" class="w-16 bg-white border border-slate-300 rounded text-center py-1 font-semibold text-sky-900 focus:ring-2 focus:ring-teal-500">
+                    </td>
+                    <td class="p-2 bg-amber-50/20 text-center">
+                        <input type="number" min="0" max="20" value="${record.midterm}" id="mt_${student.id}" class="w-16 bg-white border border-slate-300 rounded text-center py-1 font-semibold text-amber-900 focus:ring-2 focus:ring-teal-500">
+                    </td>
+                    <td class="p-2 bg-purple-50/20 text-center">
+                        <input type="number" min="0" max="50" value="${record.final}" id="fn_${student.id}" class="w-16 bg-white border border-slate-300 rounded text-center py-1 font-semibold text-purple-900 focus:ring-2 focus:ring-teal-500">
+                    </td>
+                    
+                    <!-- Read-only values calculated -->
+                    <td class="p-3 text-center font-bold text-slate-700 bg-slate-100/50" id="total_${student.id}">
+                        ${(record.notebook + record.assignment + record.midterm + record.final).toFixed(1)}
+                    </td>
+                    <td class="p-3 text-center font-bold text-teal-800 bg-teal-50/30" id="grade_${student.id}">
+                        ${record.grade}
+                    </td>
+                    
+                    <!-- Action Button -->
+                    <td class="p-2 text-center">
+                        <button onclick="saveSingleStudentScore('${student.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1 px-2.5 rounded text-[11px] transition shadow-sm">
+                            <i class="fa-solid fa-floppy-disk"></i> บันทึก
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        // Save a single pupil row changes
+        function saveSingleStudentScore(studentId) {
+            // Backup current database first for admin restoration safety
+            createInitialRestorePoint(`ก่อนแก้ไขคะแนนรายบุคคล รหัส ${studentId}`);
+
+            const subject = document.getElementById('filterSubject').value;
+            const nbVal = parseFloat(document.getElementById(`nb_${studentId}`).value) || 0;
+            const asVal = parseFloat(document.getElementById(`as_${studentId}`).value) || 0;
+            const mtVal = parseFloat(document.getElementById(`mt_${studentId}`).value) || 0;
+            const fnVal = parseFloat(document.getElementById(`fn_${studentId}`).value) || 0;
+
+            const total = nbVal + asVal + mtVal + fnVal;
+            const grade = calculateGrade(total);
+
+            const scoreKey = `${studentId}_${subject}`;
+            const previousScore = APP_STATE.scores[scoreKey] ? APP_STATE.scores[scoreKey].total : 0;
+
+            APP_STATE.scores[scoreKey] = {
+                studentId,
+                subject,
+                notebook: nbVal,
+                assignment: asVal,
+                midterm: mtVal,
+                final: fnVal,
+                total: total,
+                grade: grade,
+                updatedBy: APP_STATE.currentUser.fullname,
+                updatedAt: new Date().toLocaleString('th-TH')
+            };
+
+            // Update fields visually fast
+            document.getElementById(`total_${studentId}`).innerText = total.toFixed(1);
+            document.getElementById(`grade_${studentId}`).innerText = grade;
+
+            // Log update activity
+            const studentInfo = APP_STATE.students.find(s => s.id === studentId);
+            const studentName = studentInfo ? `${studentInfo.firstname} ${studentInfo.lastname}` : studentId;
+
+            const logMsg = {
+                timestamp: new Date().toLocaleTimeString('th-TH'),
+                action: "แก้ไขคะแนน",
+                description: `ครู ${APP_STATE.currentUser.fullname} อัปเดตคะแนน ${subject} ของ ${studentName} (ใหม่: ${total.toFixed(1)} จากเดิม: ${previousScore.toFixed(1)})`
+            };
+            APP_STATE.logs.unshift(logMsg);
+
+            renderTeacherLogs();
+        }
+
+        function addNewStudentRow() {
+            const level = document.getElementById('filterLevel').value;
+            const room = document.getElementById('filterRoom').value;
+            
+            const newId = (Math.floor(Math.random() * 90000) + 10000).toString(); // unique random 5 digits
+            
+            // Ask for name
+            const nameInput = prompt("ระบุชื่อและนามสกุลนักเรียนใหม่ (เช่น สมชาย สุขสบาย):");
+            if (!nameInput) return;
+            const nameParts = nameInput.split(" ");
+            const fname = nameParts[0] || "นักเรียน";
+            const lname = nameParts[1] || "ใหม่";
+
+            APP_STATE.students.push({
+                id: newId,
+                prefix: "นาย",
+                firstname: fname,
+                lastname: lname,
+                level: level,
+                room: room
+            });
+
+            // Log
+            APP_STATE.logs.unshift({
+                timestamp: new Date().toLocaleTimeString('th-TH'),
+                action: "เพิ่มนักเรียน",
+                description: `เพิ่มรายชื่อ ${fname} ${lname} (รหัส: ${newId}) เข้าห้อง ม.${level}/${room} เรียบร้อย`
+            });
+
+            onTeacherFilterChange();
+        }
+
+        function renderTeacherLogs() {
+            const container = document.getElementById('teacherLogsList');
+            container.innerHTML = "";
+            
+            if (APP_STATE.logs.length === 0) {
+                container.innerHTML = `<div class="p-3 text-slate-400 text-center text-[10px]">ไม่มีความเคลื่อนไหวล่าสุด</div>`;
+                return;
+            }
+
+            APP_STATE.logs.forEach(log => {
+                const item = document.createElement('div');
+                item.className = "p-2.5 flex justify-between items-start gap-3 hover:bg-slate-50";
+                item.innerHTML = `
+                    <div class="space-y-0.5">
+                        <span class="font-semibold text-slate-800 block">${log.action}</span>
+                        <p class="text-slate-500 leading-tight">${log.description}</p>
+                    </div>
+                    <span class="text-slate-400 font-mono text-[10px] whitespace-nowrap bg-slate-100 px-1.5 py-0.5 rounded">${log.timestamp}</span>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+
+        // ================= ADMIN PORTAL CONTROL =================
+        function renderAdminDashboard() {
+            // Update counts stats
+            document.getElementById('adminStatStudents').innerText = `${APP_STATE.students.length} คน`;
+            document.getElementById('adminStatTeachers').innerText = `${APP_STATE.teachers.filter(t => t.approved).length} บัญชี`;
+            document.getElementById('adminStatSubjects').innerText = `${SUBJECT_LIST.length} วิชา`;
+            document.getElementById('adminStatScores').innerText = `${Object.keys(APP_STATE.scores).length} รายการ`;
+
+            renderAdminTeacherApprovals();
+            renderAdminRestorePoints();
+        }
+
+        function renderAdminTeacherApprovals() {
+            const container = document.getElementById('adminTeacherApprovalList');
+            container.innerHTML = "";
+
+            const pending = APP_STATE.teachers.filter(t => !t.approved);
+            const approved = APP_STATE.teachers.filter(t => t.approved);
+
+            if (pending.length === 0 && approved.length === 0) {
+                container.innerHTML = `<p class="text-slate-400 text-xs text-center py-4">ไม่พบบันทึกรายชื่อบัญชีคุณครูในระบบ</p>`;
+                return;
+            }
+
+            // Render Pending First
+            if (pending.length > 0) {
+                const pTitle = document.createElement('div');
+                pTitle.className = "text-[10px] font-bold text-yellow-800 bg-yellow-100 p-1.5 rounded uppercase tracking-wider mb-2";
+                pTitle.innerText = "อยู่ระหว่างรอการอนุมัติ (Pending Action Required)";
+                container.appendChild(pTitle);
+
+                pending.forEach(teacher => {
+                    const row = document.createElement('div');
+                    row.className = "bg-yellow-50/50 border border-yellow-200 rounded-xl p-3 flex justify-between items-center text-xs gap-3";
+                    row.innerHTML = `
+                        <div>
+                            <span class="font-bold text-slate-800 block">${teacher.fullname}</span>
+                            <span class="text-slate-400 block font-mono">Username: ${teacher.username}</span>
+                        </div>
+                        <button onclick="approveTeacherAccount('${teacher.username}')" class="bg-teal-600 hover:bg-teal-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition shadow-sm">
+                            <i class="fa-solid fa-user-plus mr-1"></i> อนุมัติสิทธิ์ครู
+                        </button>
+                    `;
+                    container.appendChild(row);
+                });
+            }
+
+            // Render Approved list
+            const aTitle = document.createElement('div');
+            aTitle.className = "text-[10px] font-bold text-slate-600 bg-slate-100 p-1.5 rounded uppercase tracking-wider mt-4 mb-2";
+            aTitle.innerText = "คุณครูที่ได้รับอนุญาตแล้ว (Active Approved Teachers)";
+            container.appendChild(aTitle);
+
+            approved.forEach(teacher => {
+                const row = document.createElement('div');
+                row.className = "bg-slate-50 border border-slate-200 rounded-xl p-3 flex justify-between items-center text-xs";
+                row.innerHTML = `
+                    <div>
+                        <span class="font-bold text-slate-700 block">${teacher.fullname}</span>
+                        <span class="text-slate-400 font-mono">ID: ${teacher.username}</span>
+                    </div>
+                    <span class="bg-emerald-100 text-emerald-800 text-[10px] px-2.5 py-0.5 rounded-full font-bold">
+                        <i class="fa-solid fa-circle-check"></i> อนุมัติแล้ว
+                    </span>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function approveTeacherAccount(username) {
+            const index = APP_STATE.teachers.findIndex(t => t.username === username);
+            if (index !== -1) {
+                APP_STATE.teachers[index].approved = true;
+                
+                // Log action
+                APP_STATE.logs.unshift({
+                    timestamp: new Date().toLocaleTimeString('th-TH'),
+                    action: "อนุมัติคุณครู",
+                    description: `แอดมิน อนุมัติสิทธิ์การล็อกอินแก้ไขคะแนนของคุณครู: ${APP_STATE.teachers[index].fullname}`
+                });
+
+                renderAdminDashboard();
+            }
+        }
+
+        // Create database snapshot restore point before any bulk actions
+        function createInitialRestorePoint(triggerReason) {
+            // Keep maximum of 5 checkpoints to not overflow brower memory
+            if (APP_STATE.restorePoints.length >= 5) {
+                APP_STATE.restorePoints.pop();
+            }
+
+            const snapshot = {
+                id: "RESTORE_" + Date.now(),
+                timestamp: new Date().toLocaleString('th-TH'),
+                reason: triggerReason,
+                scores: JSON.parse(JSON.stringify(APP_STATE.scores)),
+                students: JSON.parse(JSON.stringify(APP_STATE.students))
+            };
+
+            APP_STATE.restorePoints.unshift(snapshot);
+        }
+
+        function renderAdminRestorePoints() {
+            const container = document.getElementById('adminRestorePointsList');
+            container.innerHTML = "";
+
+            if (APP_STATE.restorePoints.length === 0) {
+                container.innerHTML = `<p class="text-slate-400 text-xs text-center py-4">ไม่มีจุดสำรองข้อมูลประวัติ</p>`;
+                return;
+            }
+
+            APP_STATE.restorePoints.forEach(point => {
+                const countOfScores = Object.keys(point.scores).length;
+                const card = document.createElement('div');
+                card.className = "bg-indigo-50/40 border border-indigo-100 rounded-xl p-3 space-y-2 text-xs hover:bg-indigo-50 hover:border-indigo-200 transition-all";
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="font-bold text-slate-800 block">${point.reason}</span>
+                            <span class="text-slate-400 text-[10px] block font-mono">สร้างเมื่อ: ${point.timestamp}</span>
+                        </div>
+                        <span class="bg-indigo-100 text-indigo-800 text-[10px] font-bold px-2 py-0.5 rounded font-mono">
+                            ${countOfScores} คะแนน
+                        </span>
+                    </div>
+                    <div class="flex justify-between items-center pt-2 border-t border-indigo-100/60">
+                        <span class="text-[10px] text-slate-500">ม.6/1: ${point.students.length} คน</span>
+                        <button onclick="executeRestore('${point.id}')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1 rounded text-[10px] transition shadow flex items-center gap-1">
+                            <i class="fa-solid fa-clock-rotate-left"></i> ย้อนเวลากลับไปจุดนี้
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Restore entire scores to checkpoint chosen
+        function executeRestore(pointId) {
+            const point = APP_STATE.restorePoints.find(p => p.id === pointId);
+            if (!point) return;
+
+            if (confirm(`คุณต้องการย้อนประวัติฐานข้อมูลกลับไปยัง "${point.reason}" ใช่หรือไม่?\nข้อมูลคะแนนที่กรอกหลังจากเวลานี้จะถูกทดแทนทั้งหมด`)) {
+                // Restore values
+                APP_STATE.scores = JSON.parse(JSON.stringify(point.scores));
+                APP_STATE.students = JSON.parse(JSON.stringify(point.students));
+
+                APP_STATE.logs.unshift({
+                    timestamp: new Date().toLocaleTimeString('th-TH'),
+                    action: "กู้ข้อมูลฐาน",
+                    description: `ผู้ดูแลระบบ ทำการกู้คืนฐานข้อมูล ย้อนเวลากลับจุด "${point.reason}" สำเร็จ`
+                });
+
+                renderAdminDashboard();
+                alert("ระบบกู้คืนคะแนนและรายชื่อย้อนกลับจุดสำรองเรียบร้อยแล้ว!");
+            }
+        }
+
+        function resetSystemDataToDefault() {
+            if (confirm("คุณแน่ใจหรือไม่ว่าต้องการรีเซ็ตระบบคะแนนนักเรียนทั้งหมด?\nข้อมูลคะแนนที่อัปโหลดทั้งหมดจะถูกรีเซ็ตและเริ่มใหม่ตั้งแต่แรก")) {
+                APP_STATE.scores = {};
+                APP_STATE.logs = [];
+                initializeDefaultScores();
+                createInitialRestorePoint("รีเซ็ตระบบหลัก");
+                renderAdminDashboard();
+                alert("รีเซ็ตระบบเป็นค่าเริ่มต้นสมบูรณ์");
+            }
+        }
+
+
+        // ================= BULK IMPORT: EXCEL AND CSV ENGINE =================
+        function openImportExcelModal() {
+            document.getElementById('importExcelModal').classList.remove('hidden');
+            
+            // Sync modal target levels to teacher's filter selected
+            document.getElementById('excelTargetLevel').value = document.getElementById('filterLevel').value;
+            document.getElementById('excelTargetRoom').value = document.getElementById('filterRoom').value;
+            document.getElementById('excelTargetSubject').value = document.getElementById('filterSubject').value;
+
+            // Reset UI States
+            parsedExcelData = null;
+            excelHeaders = [];
+            document.getElementById('mappingSection').classList.add('hidden');
+            document.getElementById('importPreviewSection').classList.add('hidden');
+            document.getElementById('confirmImportExcelBtn').disabled = true;
+            document.getElementById('excelFileInput').value = "";
+        }
+
+        function closeImportExcelModal() {
+            document.getElementById('importExcelModal').classList.add('hidden');
+        }
+
+        function triggerExcelFileInput(event) {
+            event.stopPropagation();
+            document.getElementById('excelFileInput').click();
+        }
+
+        // Handling files drop / click
+        function handleExcelFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            readExcelFile(file);
+        }
+
+        // Drag and Drop implementation
+        const dropzone = document.getElementById('dropzone');
+        dropzone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropzone.className = "border-2 border-dashed border-teal-500 bg-slate-100 rounded-xl p-8 text-center cursor-pointer transition-all space-y-2 relative";
+        });
+        dropzone.addEventListener('dragleave', () => {
+            dropzone.className = "border-2 border-dashed border-slate-300 hover:border-teal-500 hover:bg-slate-50 rounded-xl p-8 text-center cursor-pointer transition-all space-y-2 relative";
+        });
+        dropzone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropzone.className = "border-2 border-dashed border-slate-300 hover:border-teal-500 hover:bg-slate-50 rounded-xl p-8 text-center cursor-pointer transition-all space-y-2 relative";
+            const file = e.dataTransfer.files[0];
+            if (file) {
+                readExcelFile(file);
+            }
+        });
+
+        // Reading the Excel binary or text CSV file using SheetJS (XLSX)
+        function readExcelFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // Grab First Sheet name
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    
+                    // Parse sheet to JSON objects with raw rows
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    
+                    if (jsonData.length < 2) {
+                        alert("ไฟล์สเปรดชีตของคุณไม่มีแถวข้อมูลคะแนนที่เพียงพอ");
+                        return;
+                    }
+
+                    // Look for header row (assuming first non-empty array)
+                    let headerIndex = 0;
+                    for (let i = 0; i < jsonData.length; i++) {
+                        if (jsonData[i].length > 0) {
+                            headerIndex = i;
+                            break;
+                        }
+                    }
+
+                    excelHeaders = jsonData[headerIndex].map(h => String(h || '').trim());
+                    // Filter raw rows starting from row under headers
+                    parsedExcelData = [];
+                    for (let i = headerIndex + 1; i < jsonData.length; i++) {
+                        const row = jsonData[i];
+                        if (row && row.length > 0) {
+                            const obj = {};
+                            excelHeaders.forEach((header, colIndex) => {
+                                if (header) {
+                                    obj[header] = row[colIndex];
+                                }
+                            });
+                            parsedExcelData.push(obj);
+                        }
+                    }
+
+                    // Display mapping controls
+                    setupMappingOptions();
+
+                } catch(err) {
+                    console.error(err);
+                    alert("ไม่สามารถอ่านรูปแบบไฟล์ Excel/CSV นี้ได้ กรุณาใช้ไฟล์เทมเพลตมาตรฐาน");
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Configure mapping dropdown items from read excel headers
+        function setupMappingOptions() {
+            const mappingSection = document.getElementById('mappingSection');
+            mappingSection.classList.remove('hidden');
+
+            const idSelect = document.getElementById('mapIdCol');
+            const nbSelect = document.getElementById('mapNotebookCol');
+            const asSelect = document.getElementById('mapAssignmentCol');
+            const mtSelect = document.getElementById('mapMidtermCol');
+            const fnSelect = document.getElementById('mapFinalCol');
+
+            // clear previous
+            [idSelect, nbSelect, asSelect, mtSelect, fnSelect].forEach(sel => sel.innerHTML = "");
+
+            // Populate with discovered header labels
+            excelHeaders.forEach(header => {
+                const opt = document.createElement('option');
+                opt.value = header;
+                opt.innerText = header;
+                
+                // Append copy to each selection
+                idSelect.appendChild(opt.cloneNode(true));
+                nbSelect.appendChild(opt.cloneNode(true));
+                asSelect.appendChild(opt.cloneNode(true));
+                mtSelect.appendChild(opt.cloneNode(true));
+                fnSelect.appendChild(opt.cloneNode(true));
+            });
+
+            // Smart Autofill default mappings based on naming match strings
+            autoMatchHeader(idSelect, ["เลขประจำตัว", "รหัสประจำตัว", "รหัส", "id", "student id", "student_id"]);
+            autoMatchHeader(nbSelect, ["สมุด", "คะแนนสมุด", "notebook", "book", "สมุดรวม"]);
+            autoMatchHeader(asSelect, ["งาน", "คะแนนงาน", "งานรวม", "assignment", "work", "ใบงาน"]);
+            autoMatchHeader(mtSelect, ["กลางภาค", "สอบกลางภาค", "midterm", "mid"]);
+            autoMatchHeader(fnSelect, ["ปลายภาค", "สอบปลายภาค", "final", "fin"]);
+
+            // Bind triggers to update preview on dropdown selection
+            [idSelect, nbSelect, asSelect, mtSelect, fnSelect].forEach(sel => {
+                sel.onchange = generateImportPreview;
+            });
+
+            generateImportPreview();
+        }
+
+        // Smart column lookup
+        function autoMatchHeader(selectElem, possibleMatches) {
+            for (let i = 0; i < selectElem.options.length; i++) {
+                const text = selectElem.options[i].text.toLowerCase();
+                if (possibleMatches.some(m => text.includes(m))) {
+                    selectElem.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+
+        // Render mapped values inside visual preview grid inside modal
+        function generateImportPreview() {
+            const idCol = document.getElementById('mapIdCol').value;
+            const nbCol = document.getElementById('mapNotebookCol').value;
+            const asCol = document.getElementById('mapAssignmentCol').value;
+            const mtCol = document.getElementById('mapMidtermCol').value;
+            const fnCol = document.getElementById('mapFinalCol').value;
+
+            const previewSection = document.getElementById('importPreviewSection');
+            const previewBody = document.getElementById('importPreviewTableBody');
+            
+            previewSection.classList.remove('hidden');
+            previewBody.innerHTML = "";
+
+            if (!parsedExcelData || parsedExcelData.length === 0) return;
+
+            // Show maximum of 10 rows for clean review
+            const limit = Math.min(parsedExcelData.length, 10);
+            
+            for (let i = 0; i < limit; i++) {
+                const row = parsedExcelData[i];
+                const rawId = String(row[idCol] || '').trim();
+                
+                // Check if this student exists in database list
+                const student = APP_STATE.students.find(s => s.id === rawId);
+                const nameDisplay = student ? `${student.prefix}${student.firstname} ${student.lastname}` : '<span class="text-rose-600 font-bold font-sans">ไม่พบรหัสในฐานข้อมูลหลัก</span>';
+                
+                const nbVal = parseFloat(row[nbCol]) || 0;
+                const asVal = parseFloat(row[asCol]) || 0;
+                const mtVal = parseFloat(row[mtCol]) || 0;
+                const fnVal = parseFloat(row[fnCol]) || 0;
+                const total = nbVal + asVal + mtVal + fnVal;
+
+                const tr = document.createElement('tr');
+                tr.className = student ? "hover:bg-slate-50 border-b border-slate-200" : "bg-rose-50 border-b border-rose-100";
+                tr.innerHTML = `
+                    <td class="p-2 text-center text-slate-400 font-mono">${i + 1}</td>
+                    <td class="p-2 font-mono font-bold">${rawId}</td>
+                    <td class="p-2">${nameDisplay}</td>
+                    <td class="p-2 text-center font-mono">${nbVal}</td>
+                    <td class="p-2 text-center font-mono">${asVal}</td>
+                    <td class="p-2 text-center font-mono">${mtVal}</td>
+                    <td class="p-2 text-center font-mono">${fnVal}</td>
+                    <td class="p-2 text-center font-bold text-emerald-800 font-mono">${total.toFixed(1)}</td>
+                `;
+                previewBody.appendChild(tr);
+            }
+
+            // Enable submit if any
+            document.getElementById('confirmImportExcelBtn').disabled = false;
+        }
+
+        // Execute save to RAM of all mapped records
+        function executeExcelImport() {
+            createInitialRestorePoint("ก่อนนำเข้าคะแนน Excel ยกห้อง");
+
+            const level = document.getElementById('excelTargetLevel').value;
+            const room = document.getElementById('excelTargetRoom').value;
+            const subject = document.getElementById('excelTargetSubject').value;
+
+            const idCol = document.getElementById('mapIdCol').value;
+            const nbCol = document.getElementById('mapNotebookCol').value;
+            const asCol = document.getElementById('mapAssignmentCol').value;
+            const mtCol = document.getElementById('mapMidtermCol').value;
+            const fnCol = document.getElementById('mapFinalCol').value;
+
+            let successCount = 0;
+            let missingInDbCount = 0;
+
+            parsedExcelData.forEach(row => {
+                const rawId = String(row[idCol] || '').trim();
+                if (!rawId) return;
+
+                // Make sure student matches the class level and room target
+                const student = APP_STATE.students.find(s => s.id === rawId);
+                if (!student) {
+                    missingInDbCount++;
+                    return; // Skip if no matching pupil inside system
+                }
+
+                // Override level and room to ensure consistency
+                student.level = level;
+                student.room = room;
+
+                const nbVal = parseFloat(row[nbCol]) || 0;
+                const asVal = parseFloat(row[asCol]) || 0;
+                const mtVal = parseFloat(row[mtCol]) || 0;
+                const fnVal = parseFloat(row[fnCol]) || 0;
+                const total = nbVal + asVal + mtVal + fnVal;
+                const grade = calculateGrade(total);
+
+                const scoreKey = `${rawId}_${subject}`;
+                APP_STATE.scores[scoreKey] = {
+                    studentId: rawId,
+                    subject: subject,
+                    notebook: nbVal,
+                    assignment: asVal,
+                    midterm: mtVal,
+                    final: fnVal,
+                    total: total,
+                    grade: grade,
+                    updatedBy: `${APP_STATE.currentUser.fullname} (Excel)`,
+                    updatedAt: new Date().toLocaleString('th-TH')
+                };
+
+                successCount++;
+            });
+
+            // Audit Log
+            APP_STATE.logs.unshift({
+                timestamp: new Date().toLocaleTimeString('th-TH'),
+                action: "นำเข้าคะแนน Excel",
+                description: `ครู ${APP_STATE.currentUser.fullname} อัปเดตคะแนน ${subject} ม.${level}/${room} นำเข้าสำเร็จ: ${successCount} คน (ข้ามรหัสที่ไม่มีในฐาน: ${missingInDbCount} คน)`
+            });
+
+            // Reset teacher UI selector and re-render Table to reflect import changes!
+            document.getElementById('filterLevel').value = level;
+            document.getElementById('filterRoom').value = room;
+            document.getElementById('filterSubject').value = subject;
+
+            onTeacherFilterChange();
+            renderTeacherLogs();
+            closeImportExcelModal();
+
+            alert(`กระบวนการนำเข้าคะแนน Excel สำเร็จ!\n- บันทึกคะแนนสำเร็จ: ${successCount} คน\n- ข้ามรหัสที่ตรวจไม่พบ: ${missingInDbCount} คน`);
+        }
+
+        // Automatic generation of download mock spreadsheet with students data
+        function downloadSampleTemplate() {
+            // Header columns
+            const ws_data = [
+                ["เลขประจำตัว", "คำนำหน้า", "ชื่อ", "นามสกุล", "คะแนนสมุด (10)", "คะแนนงาน (40)", "คะแนนกลางภาค (20)", "คะแนนปลายภาค (30)"],
+                ["26307", "นาย", "นิธิกร", "มูลทองชุน", 8, 35, 17, 24],
+                ["26532", "นาย", "ธเนศ", "เปรมสมาน", 9, 38, 18, 26],
+                ["26687", "นาย", "ก้องภพ", "เตชะเชี่ยวณรงค์", 7, 32, 14, 21],
+                ["26694", "นาย", "ธนกฤต", "แซ่จ๋าว", 9, 36, 16, 25]
+            ];
+
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "รายชื่อคะแนน");
+            
+            // Trigger browser download
+            XLSX.writeFile(wb, "เทมเพลตรายชื่อนักเรียน_ม6_1_บางมดวิทยา.xlsx");
+        }
+    </script>
+</body>
+</html>
