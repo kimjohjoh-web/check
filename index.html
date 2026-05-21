@@ -229,7 +229,7 @@
                         </div>
                         
                         <button id="credentialSubmitBtn" onclick="submitCredentialLogin()" class="w-full text-white font-bold py-2.5 px-4 rounded-lg shadow-md transition-colors text-sm flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-right-from-bracket"></i> ยืนยันตัวเพื่อเข้าสู่ระบบ
+                            <i class="fa-solid fa-right-to-bracket"></i> ยืนยันตัวเพื่อเข้าสู่ระบบ
                         </button>
 
                         <!-- Extra Action: Register for Teacher only -->
@@ -319,8 +319,8 @@
                             </div>
                         </div>
 
-                        <!-- Highlight Stat Panel (Total 60 points) - Modified Grid layout to 3 boxes (No Evaluation Box) -->
-                        <div class="grid grid-cols-1 sm:grid-cols-3 border-b border-slate-100 text-center">
+                        <!-- Highlight Stat Panel (Total 60 points) -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 border-b border-slate-100 text-center">
                             <div class="p-4 border-r border-slate-100">
                                 <span class="text-xs text-slate-500 block mb-0.5 font-semibold">กลางภาค (สอบ+สมุด)</span>
                                 <span id="statClassworkScore" class="text-xl font-bold text-blue-600">0.0 / 30</span>
@@ -329,9 +329,13 @@
                                 <span class="text-xs text-slate-500 block mb-0.5 font-semibold">ปลายภาค (สอบ+งาน+สมุด)</span>
                                 <span id="statFinalScore" class="text-xl font-bold text-purple-600">0.0 / 30</span>
                             </div>
-                            <div class="p-4 bg-emerald-50/20">
+                            <div class="p-4 border-r border-slate-100 bg-emerald-50/20">
                                 <span class="text-xs text-slate-500 block mb-0.5 font-bold text-emerald-800">คะแนนรวมทั้งหมด</span>
                                 <span id="statTotalScore" class="text-xl font-black text-emerald-600">0.0 / 60</span>
+                            </div>
+                            <div class="p-4 bg-blue-50/50">
+                                <span class="text-xs text-slate-500 block mb-0.5 font-semibold">ผลการประเมิน</span>
+                                <span id="statGradeText" class="text-xl block text-slate-800 font-extrabold">-</span>
                             </div>
                         </div>
 
@@ -391,7 +395,7 @@
                         <div class="space-y-1">
                             <h4 class="font-bold text-indigo-900 text-sm">หมายเหตุการประเมินผลสัมฤทธิ์ทางการเรียน:</h4>
                             <p class="text-slate-600 text-xs leading-relaxed">
-                                โครงสร้างประเมินผลสัมฤทธิ์อ้างอิงจากเกณฑ์การทำคะแนนสะสมระหว่างเรียนและสอบปลายภาคเรียนจริงเต็ม 60 คะแนน เพื่อความโปร่งใสและมีหลักฐานการประเมินที่ชัดเจน หากมีข้อสงสัยเกี่ยวกับคะแนนย่อยในส่วนต่างๆ สามารถติดต่อสอบถามรายละเอียดเพิ่มเติมกับคุณครูผู้สอนประจำรายวิชาได้โดยตรง
+                                ผลการเรียนคิดจากอัตราส่วนร้อยละของคะแนนเต็ม 60 คะแนน (ร้อยละ 80 ขึ้นไป = เกรด 4, 75 = 3.5, 70 = 3, 65 = 2.5, 60 = 2, 55 = 1.5, 50 = 1, ต่ำกว่า 50 = เกรด 0) เพื่อให้เป็นไปตามเกณฑ์มาตรฐานรายวิชาของโรงเรียนบางมดวิทยา หากมีข้อสงสัยเกี่ยวกับคะแนนย่อยสามารถติดต่อคุณครูผู้สอนประจำรายวิชาได้โดยตรง
                             </p>
                         </div>
                     </div>
@@ -488,7 +492,7 @@
                     </div>
                 </div>
 
-                <!-- Main Grid Student List (Excel style editing) - Modified: Removed Grade header column -->
+                <!-- Main Grid Student List (Excel style editing) -->
                 <div class="overflow-x-auto border border-slate-200 rounded-xl shadow-inner bg-slate-50">
                     <table class="w-full text-left border-collapse text-xs">
                         <thead>
@@ -499,6 +503,7 @@
                                 <th class="p-2 font-semibold text-center bg-sky-50/80 border-b border-sky-200" colspan="2">กลางภาค (เต็ม 30)</th>
                                 <th class="p-2 font-semibold text-center bg-purple-50/80 border-b border-purple-200" colspan="3">ปลายภาค (เต็ม 30)</th>
                                 <th class="p-3 font-semibold text-center w-20 bg-emerald-100/30" rowspan="2">รวม (60)</th>
+                                <th class="p-3 font-semibold text-center w-16" rowspan="2">เกรด</th>
                                 <th class="p-3 font-semibold text-center w-20" rowspan="2">ดำเนินการ</th>
                             </tr>
                             <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 text-[10px]">
@@ -999,7 +1004,7 @@
                 showLoading("กำลังเชื่อมต่อดึงข้อมูลจาก Google Sheets...");
                 try {
                     // ป้องกัน Failed to fetch ด้วยการดักรับและควบคุม Timeout ยืดหยุ่น
-                    const response = await fetchWithTimeout(`${gasUrl}?action=getData`, { method: "GET" }, 8000);
+                    const response = await fetchWithTimeout(`${gasUrl}?action=getData`, { method: "GET" }, 15000);
                     const result = await response.json();
                     
                     if (result && result.status === "success" && result.data) {
@@ -1022,6 +1027,7 @@
                                     finalWork: parseFloat(s.finalWork || s.final_work || 0),
                                     finalNotebook: parseFloat(s.finalNotebook || s.final_book || 0),
                                     total: parseFloat(s.total || 0),
+                                    grade: s.grade || "0",
                                     updatedBy: s.updatedBy || "ระบบ",
                                     updatedAt: s.updatedAt || ""
                                 };
@@ -1034,8 +1040,9 @@
                         throw new Error(result ? result.message : "โครงสร้างไม่สมบูรณ์");
                     }
                 } catch (error) {
-                    // ป้องกันการแจ้งเตือน Error สีแดงใน Console เมื่อเชื่อมต่อไม่ได้ (เช่น เครือข่ายจำกัด หรือ iFrame บล็อก)
-                    console.warn("GAS Web App Connection Offline or Sandbox Restricted. Falling back to local Database. Details:", error.message);
+                    console.error("GAS Load Failed: ", error);
+                    // สลับเข้าโหมดจำลองทันทีอย่างปลอดภัยโดยไม่พังระบบ
+                    showAlert("ไม่สามารถดึงข้อมูลผ่าน Apps Script ได้ (เชื่อมโยงไม่สำเร็จหรือยังไม่ได้ตั้งสิทธิ์แชร์ Web App) ระบบสลับไปใช้ 'โหมดจัดเก็บในเครื่อง' เพื่อให้สามารถทำงานต่อไปได้");
                     loadMockData();
                     updateConnectionIndicator(false);
                     updateDashboardStats(false);
@@ -1097,6 +1104,7 @@
                         finalWork: finalWork,
                         finalNotebook: finalNotebook,
                         total: total,
+                        grade: calculateGrade(total),
                         updatedBy: "ระบบอัตโนมัติ",
                         updatedAt: new Date().toLocaleString('th-TH')
                     };
@@ -1118,6 +1126,7 @@
                         final_work: s.finalWork,
                         final_book: s.finalNotebook,
                         total: s.total,
+                        grade: s.grade,
                         updatedBy: s.updatedBy,
                         updatedAt: s.updatedAt
                     }));
@@ -1152,7 +1161,8 @@
                         throw new Error(result ? result.message : "การติดต่อเซิร์ฟเวอร์ผิดพลาด");
                     }
                 } catch (error) {
-                    console.warn("GAS Sync Failed (Falling back to local cache): ", error.message);
+                    console.error("GAS Sync Failed: ", error);
+                    showAlert("ไม่สามารถซิงค์ขึ้น Google Sheets ได้ ระบบจะสำรองข้อมูลการแก้ไขของครูไว้ในคอมพิวเตอร์นี้ชั่วคราว (โหมดจำลอง)");
                     backupLocal();
                     updateDashboardStats(false);
                     return true; // ปล่อยให้ครูทำงานต่อได้ในโหมดออฟไลน์
@@ -1487,6 +1497,15 @@
                 document.getElementById('statClassworkScore').innerText = `${midtermTotal.toFixed(1)} / 30`;
                 document.getElementById('statFinalScore').innerText = `${finalTotal.toFixed(1)} / 30`;
                 document.getElementById('statTotalScore').innerText = `${total.toFixed(1)} / 60`;
+                
+                const grade = record.grade;
+                let colorClass = "text-emerald-600";
+                if (grade === "0") colorClass = "text-rose-600";
+                else if (parseFloat(grade) < 2.0) colorClass = "text-yellow-600";
+                
+                const gradeLabel = document.getElementById('statGradeText');
+                gradeLabel.className = `text-xl font-extrabold ${colorClass}`;
+                gradeLabel.innerText = `เกรด: ${grade}`;
 
                 document.getElementById('detailMidtermTotal').innerText = `${midtermTotal} / 30 คะแนน`;
                 document.getElementById('detailMidtermQuiz').innerText = `${record.midtermQuiz} / 20`;
@@ -1502,6 +1521,7 @@
                 document.getElementById('statClassworkScore').innerText = "0.0 / 30";
                 document.getElementById('statFinalScore').innerText = "0.0 / 30";
                 document.getElementById('statTotalScore').innerText = "0.0 / 60";
+                document.getElementById('statGradeText').innerText = "-";
                 
                 document.getElementById('detailMidtermTotal').innerText = "0 / 30";
                 document.getElementById('detailMidtermQuiz').innerText = "0 / 20";
@@ -1512,6 +1532,19 @@
                 document.getElementById('detailFinalWork').innerText = "0 / 5";
                 document.getElementById('detailFinalNotebook').innerText = "0 / 10";
             }
+        }
+
+        // Calculation of Grade formula adapted to max 60 points
+        function calculateGrade(score) {
+            const percentage = (score / 60) * 100;
+            if (percentage >= 80) return "4.0";
+            if (percentage >= 75) return "3.5";
+            if (percentage >= 70) return "3.0";
+            if (percentage >= 65) return "2.5";
+            if (percentage >= 60) return "2.0";
+            if (percentage >= 55) return "1.5";
+            if (percentage >= 50) return "1.0";
+            return "0";
         }
 
         // ==========================================
@@ -1575,6 +1608,7 @@
                         finalWork: 0,
                         finalNotebook: 0,
                         total: 0,
+                        grade: "0",
                         updatedBy: "-",
                         updatedAt: "-"
                     };
@@ -1607,6 +1641,9 @@
                     <td class="p-3 text-center font-bold text-slate-800 bg-slate-100" id="total_${student.id}">
                         ${(record.total || 0).toFixed(1)}
                     </td>
+                    <td class="p-3 text-center font-bold text-teal-800 bg-teal-50" id="grade_${student.id}">
+                        ${record.grade || "0"}
+                    </td>
                     
                     <td class="p-2 text-center">
                         <button onclick="saveSingleStudentScore('${student.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1 px-2.5 rounded text-[11px] transition shadow-sm">
@@ -1630,6 +1667,7 @@
             const fnVal = parseFloat(document.getElementById(`fn_${studentId}`).value) || 0;
 
             const total = mqVal + mnVal + fqVal + fwVal + fnVal;
+            const grade = calculateGrade(total);
 
             const scoreKey = `${studentId}_${subject}`;
 
@@ -1642,16 +1680,18 @@
                 finalWork: fwVal,
                 finalNotebook: fnVal,
                 total: total,
+                grade: grade,
                 updatedBy: APP_STATE.currentUser.fullname,
                 updatedAt: new Date().toLocaleString('th-TH')
             };
 
             document.getElementById(`total_${studentId}`).innerText = total.toFixed(1);
+            document.getElementById(`grade_${studentId}`).innerText = grade;
 
             const studentInfo = APP_STATE.students.find(s => s.id === studentId);
             const studentName = studentInfo ? `${studentInfo.firstname} ${studentInfo.lastname}` : studentId;
 
-            addLog(APP_STATE.currentUser.fullname, `แก้ไขคะแนน ${subject} ของ ${studentName} (${total.toFixed(1)} คะแนน)`);
+            addLog(APP_STATE.currentUser.fullname, `แก้ไขคะแนน ${subject} ของ ${studentName} (${total.toFixed(1)} คะแนน เกรด ${grade})`);
 
             await syncDataBack();
             renderTeacherLogs();
@@ -2157,6 +2197,7 @@
                 const fwVal = parseFloat(row[fwCol]) || 0;
                 const fnVal = parseFloat(row[fnCol]) || 0;
                 const total = mqVal + mnVal + fqVal + fwVal + fnVal;
+                const grade = calculateGrade(total);
 
                 const scoreKey = `${rawId}_${subject}`;
                 APP_STATE.scores[scoreKey] = {
@@ -2168,6 +2209,7 @@
                     finalWork: fwVal,
                     finalNotebook: fnVal,
                     total: total,
+                    grade: grade,
                     updatedBy: `${APP_STATE.currentUser.fullname} (Excel)`,
                     updatedAt: new Date().toLocaleString('th-TH')
                 };
