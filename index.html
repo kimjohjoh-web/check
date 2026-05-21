@@ -38,6 +38,12 @@
 </head>
 <body class="h-full flex flex-col">
 
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex flex-col items-center justify-center hidden">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-indigo-600"></div>
+        <p class="mt-4 text-white font-medium text-lg" id="loadingText">กำลังทำรายการ กรุณารอสักครู่...</p>
+    </div>
+
     <!-- Top Navigation Bar -->
     <header class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white shadow-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -51,7 +57,13 @@
                 </div>
             </div>
             
-            <div class="flex items-center space-x-2">
+            <div class="flex items-center space-x-4">
+                <!-- Connection Status Indicator -->
+                <div id="connectionIndicator" class="flex items-center gap-2 px-3 py-1 bg-amber-500/20 text-amber-200 border border-amber-500/30 rounded-full text-[11px] font-medium">
+                    <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                    <span id="connectionText">โหมดสำรองจำลองในเครื่อง</span>
+                </div>
+
                 <!-- User Status Display -->
                 <div id="userBadge" class="hidden sm:flex items-center space-x-2 px-3 py-1.5 bg-white/10 rounded-full text-xs font-medium">
                     <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
@@ -67,6 +79,15 @@
 
     <!-- Main Content Area -->
     <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+        <!-- Banner for Settings Google Sheet -->
+        <div id="configAlert" class="bg-blue-50 border-l-4 border-blue-600 p-4 rounded-r-lg mb-6 max-w-5xl mx-auto flex items-start gap-3 text-xs sm:text-sm">
+            <i class="fa-solid fa-circle-info text-blue-600 mt-0.5 text-lg"></i>
+            <div>
+                <h4 class="font-bold text-blue-900">เชื่อมต่อเข้ากับฐานข้อมูล Google Sheets ได้อย่างอิสระ!</h4>
+                <p class="text-slate-600 mt-1">คุณครูและแอดมินสามารถนำลิงก์ Google Apps Script URL มาติดตั้งในหน้าผู้ดูแลระบบ เพื่อเชื่อมระบบนี้เข้ากับบัญชี Google Sheet ของคุณเพื่อเก็บข้อมูลจริงได้ตลอดเวลา</p>
+            </div>
+        </div>
 
         <!-- ================= PAGE 1: CHOOSE PORTAL / WELCOME ================= -->
         <section id="pageHome" class="space-y-8 animate-fade-in py-8">
@@ -208,7 +229,7 @@
                         </div>
                         
                         <button id="credentialSubmitBtn" onclick="submitCredentialLogin()" class="w-full text-white font-bold py-2.5 px-4 rounded-lg shadow-md transition-colors text-sm flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-right-to-bracket"></i> ยืนยันตัวเพื่อเข้าสู่ระบบ
+                            <i class="fa-solid fa-right-from-bracket"></i> ยืนยันตัวเพื่อเข้าสู่ระบบ
                         </button>
 
                         <!-- Extra Action: Register for Teacher only -->
@@ -298,8 +319,8 @@
                             </div>
                         </div>
 
-                        <!-- Highlight Stat Panel (Total 60 points) -->
-                        <div class="grid grid-cols-2 sm:grid-cols-4 border-b border-slate-100 text-center">
+                        <!-- Highlight Stat Panel (Total 60 points) - Modified Grid layout to 3 boxes (No Evaluation Box) -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 border-b border-slate-100 text-center">
                             <div class="p-4 border-r border-slate-100">
                                 <span class="text-xs text-slate-500 block mb-0.5 font-semibold">กลางภาค (สอบ+สมุด)</span>
                                 <span id="statClassworkScore" class="text-xl font-bold text-blue-600">0.0 / 30</span>
@@ -308,13 +329,9 @@
                                 <span class="text-xs text-slate-500 block mb-0.5 font-semibold">ปลายภาค (สอบ+งาน+สมุด)</span>
                                 <span id="statFinalScore" class="text-xl font-bold text-purple-600">0.0 / 30</span>
                             </div>
-                            <div class="p-4 border-r border-slate-100 bg-emerald-50/20">
+                            <div class="p-4 bg-emerald-50/20">
                                 <span class="text-xs text-slate-500 block mb-0.5 font-bold text-emerald-800">คะแนนรวมทั้งหมด</span>
                                 <span id="statTotalScore" class="text-xl font-black text-emerald-600">0.0 / 60</span>
-                            </div>
-                            <div class="p-4 bg-blue-50/50">
-                                <span class="text-xs text-slate-500 block mb-0.5 font-semibold">ผลการประเมิน</span>
-                                <span id="statGradeText" class="text-xl block text-slate-800 font-extrabold">-</span>
                             </div>
                         </div>
 
@@ -374,7 +391,7 @@
                         <div class="space-y-1">
                             <h4 class="font-bold text-indigo-900 text-sm">หมายเหตุการประเมินผลสัมฤทธิ์ทางการเรียน:</h4>
                             <p class="text-slate-600 text-xs leading-relaxed">
-                                ผลการเรียนคิดจากอัตราส่วนร้อยละของคะแนนเต็ม 60 คะแนน (ร้อยละ 80 ขึ้นไป = เกรด 4, 75 = 3.5, 70 = 3, 65 = 2.5, 60 = 2, 55 = 1.5, 50 = 1, ต่ำกว่า 50 = เกรด 0) เพื่อให้เป็นไปตามเกณฑ์มาตรฐานรายวิชาของโรงเรียนบางมดวิทยา หากมีข้อสงสัยเกี่ยวกับคะแนนย่อยสามารถติดต่อคุณครูผู้สอนประจำรายวิชาได้โดยตรง
+                                โครงสร้างประเมินผลสัมฤทธิ์อ้างอิงจากเกณฑ์การทำคะแนนสะสมระหว่างเรียนและสอบปลายภาคเรียนจริงเต็ม 60 คะแนน เพื่อความโปร่งใสและมีหลักฐานการประเมินที่ชัดเจน หากมีข้อสงสัยเกี่ยวกับคะแนนย่อยในส่วนต่างๆ สามารถติดต่อสอบถามรายละเอียดเพิ่มเติมกับคุณครูผู้สอนประจำรายวิชาได้โดยตรง
                             </p>
                         </div>
                     </div>
@@ -423,7 +440,7 @@
                             <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">ระดับชั้น</label>
                             <select id="filterLevel" onchange="onTeacherFilterChange()" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:ring-2 focus:ring-teal-500 focus:outline-none">
                                 <option value="6">มัธยมศึกษาปีที่ 6</option>
-                                <option value="5">มัยมศึกษาปีที่ 5</option>
+                                <option value="5">มัธยมศึกษาปีที่ 5</option>
                                 <option value="4">มัธยมศึกษาปีที่ 4</option>
                                 <option value="3">มัธยมศึกษาปีที่ 3</option>
                                 <option value="2">มัธยมศึกษาปีที่ 2</option>
@@ -471,7 +488,7 @@
                     </div>
                 </div>
 
-                <!-- Main Grid Student List (Excel style editing) -->
+                <!-- Main Grid Student List (Excel style editing) - Modified: Removed Grade header column -->
                 <div class="overflow-x-auto border border-slate-200 rounded-xl shadow-inner bg-slate-50">
                     <table class="w-full text-left border-collapse text-xs">
                         <thead>
@@ -482,7 +499,6 @@
                                 <th class="p-2 font-semibold text-center bg-sky-50/80 border-b border-sky-200" colspan="2">กลางภาค (เต็ม 30)</th>
                                 <th class="p-2 font-semibold text-center bg-purple-50/80 border-b border-purple-200" colspan="3">ปลายภาค (เต็ม 30)</th>
                                 <th class="p-3 font-semibold text-center w-20 bg-emerald-100/30" rowspan="2">รวม (60)</th>
-                                <th class="p-3 font-semibold text-center w-16" rowspan="2">เกรด</th>
                                 <th class="p-3 font-semibold text-center w-20" rowspan="2">ดำเนินการ</th>
                             </tr>
                             <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 text-[10px]">
@@ -554,8 +570,51 @@
             </div>
 
             <!-- Main Admin Grid Layout -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Column 1: Google Sheets Integration Panel -->
+                <div class="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+                    <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2 border-b pb-3">
+                        <i class="fa-solid fa-link text-indigo-600 animate-pulse"></i> เชื่อมต่อ Google Sheets (ระบบเวลาจริง)
+                    </h4>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1.5 uppercase">Google Apps Script Web App URL</label>
+                            <input type="url" id="gasUrlInput" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5 text-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <p class="text-[11px] text-slate-400 mt-1 leading-relaxed">วางลิงก์ Web App จาก Google Apps Script เพื่อดึงและเขียนฐานข้อมูลคะแนนกับชีตทันที</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="saveGasConnection()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2.5 rounded-lg shadow-sm transition-colors flex items-center gap-1.5">
+                                <i class="fa-solid fa-floppy-disk"></i> บันทึกและดึงข้อมูลจากชีต
+                            </button>
+                            <button onclick="disconnectGasConnection()" id="btnDisconnectGas" class="hidden bg-slate-100 hover:bg-red-50 text-slate-600 hover:text-red-600 font-bold text-xs px-4 py-2.5 rounded-lg border border-slate-200 transition-colors flex items-center gap-1.5">
+                                <i class="fa-solid fa-link-slash"></i> ยกเลิกเชื่อมต่อชีต
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DB Status Panel -->
+                <div class="bg-gradient-to-br from-slate-900 to-indigo-950 rounded-2xl shadow-md p-6 text-white flex flex-col justify-between">
+                    <div>
+                        <h4 class="font-bold text-slate-300 flex items-center gap-2 mb-3">
+                            <i class="fa-solid fa-server"></i> สถานะฐานข้อมูล
+                        </h4>
+                        <div class="space-y-2 text-xs text-slate-400">
+                            <p class="flex justify-between"><span>รายชื่อนักเรียน:</span> <span class="font-semibold text-white" id="stat-students">0 คน</span></p>
+                            <p class="flex justify-between"><span>ตารางบันทึกคะแนน:</span> <span class="font-semibold text-white" id="stat-scores">0 รายการ</span></p>
+                            <p class="flex justify-between"><span>บัญชีคุณครู:</span> <span class="font-semibold text-white" id="stat-teachers-count">0 บัญชี</span></p>
+                        </div>
+                    </div>
+                    <div class="pt-4 border-t border-slate-800 mt-4 text-[11px]">
+                        <p class="text-indigo-300">แหล่งข้อมูลระบบปัจจุบัน:</p>
+                        <span class="font-bold text-white text-xs" id="stat-source">กำลังดึงข้อมูลจำลองในเครื่อง...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Teachers and Restore points row -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Column 1: Teacher Approval System -->
+                <!-- Teacher Approval System -->
                 <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
                     <div class="pb-3 border-b border-slate-100">
                         <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
@@ -569,7 +628,7 @@
                     </div>
                 </div>
 
-                <!-- Column 2: System Backup and Database Restore -->
+                <!-- System Backup and Database Restore -->
                 <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
                     <div class="pb-3 border-b border-slate-100">
                         <h4 class="font-bold text-slate-800 text-sm flex items-center gap-2">
@@ -591,7 +650,7 @@
                 <div class="flex justify-between items-center pb-3 border-b border-slate-100">
                     <div>
                         <h4 class="font-bold text-slate-800 text-sm">ภาพรวมข้อมูลผู้ใช้งานในระบบ (Total Users)</h4>
-                        <p class="text-xs text-slate-500">บัญชีและสิทธิ์ทั้งหมดที่ถูกจัดเก็บภายใน Local Memory</p>
+                        <p class="text-xs text-slate-500">บัญชีและสิทธิ์ทั้งหมดที่ถูกจัดเก็บ</p>
                     </div>
                     <button onclick="resetSystemDataToDefault()" class="bg-rose-100 hover:bg-rose-200 text-rose-800 text-xs px-3 py-1.5 rounded-lg font-bold transition-all">
                         <i class="fa-solid fa-trash-can"></i> ล้างข้อมูลและตั้งค่าเริ่มต้นใหม่ทั้งหมด
@@ -782,15 +841,36 @@
         </div>
     </div>
 
+    <!-- Message Alert Toast Custom Modal (Instead of browser Alert) -->
+    <div id="alertModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-white rounded-2xl max-w-sm w-full mx-4 shadow-2xl border border-slate-100 overflow-hidden">
+            <div class="p-4 bg-indigo-950 text-white flex items-center gap-2">
+                <i class="fa-solid fa-circle-info text-indigo-400"></i>
+                <h4 class="font-bold text-sm">การแจ้งเตือนจากระบบ</h4>
+            </div>
+            <div class="p-6">
+                <p id="alertModalMessage" class="text-sm text-slate-600 leading-relaxed">รายละเอียดการดำเนินการสำเร็จ</p>
+                <div class="flex justify-end mt-4">
+                    <button onclick="closeAlertModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2 rounded transition-all">ตกลง</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <!-- ================= JAVASCRIPT APP LOGIC ================= -->
+    <!-- ======================================================= -->
+    <!-- JAVASCRIPT SYSTEM & GOOGLE SHEETS INTEGRATION LAYER -->
+    <!-- ======================================================= -->
     <script>
-        // ================= GLOBAL STATES & IN-MEMORY DATABASE =================
-        const APP_STATE = {
-            currentRole: 'student', // student, teacher, admin
-            currentUser: null,      // Stores details of logged-in user
-            
-            // Raw Pupil Database - Populated default values with Actual list from ม.6/1 (uploaded)
+        // Global State
+        let db = {
+            students: [],
+            scores: [],
+            teachers: [],
+            logs: []
+        };
+
+        // Static Mock Data for Fallback/In-Memory Mode
+        const mockDatabase = {
             students: [
                 { id: "26307", prefix: "นาย", firstname: "นิธิกร", lastname: "มูลทองชุน", level: "6", room: "1" },
                 { id: "26532", prefix: "นาย", firstname: "ธเนศ", lastname: "เปรมสมาน", level: "6", room: "1" },
@@ -835,23 +915,13 @@
                 { id: "28806", prefix: "นางสาว", firstname: "พัชราภา", lastname: "จันทกล", level: "6", room: "1" },
                 { id: "28807", prefix: "นางสาว", firstname: "ธนภรณ์", lastname: "อินคำ", level: "6", room: "1" }
             ],
-
-            // Score Database: Keeps grades. Map structure key: "{studentId}_{subjectName}"
             scores: {},
-
-            // Teachers lists & Approval system
             teachers: [
                 { username: 'teacher', password: 'teacher123', fullname: 'ครูสมปอง วิเศษสุข', approved: true }
             ],
-
-            // Active Student Selection for viewing scores
-            studentPortalActiveSubject: 'คณิต 1',
-
-            // Database Restore points (Backup system)
-            restorePoints: [],
-
-            // Audit update logs
-            logs: []
+            logs: [
+                { timestamp: "10:00:00", action: "เปิดระบบ", description: "ระบบเตรียมพร้อมสแตนด์บายทำงาน" }
+            ]
         };
 
         // Static configuration mapping for level room advisors
@@ -864,31 +934,157 @@
 
         const SUBJECT_LIST = ["คณิต 1", "ฟิสิกส์ 1", "อังกฤษทั่วไป", "ภาษาไทยหลัก"];
 
-        // Temporary storage for reading excel
+        // Global state vars
+        let APP_STATE = {
+            currentRole: 'student', 
+            currentUser: null,      
+            students: [],
+            scores: {},
+            teachers: [],
+            restorePoints: [],
+            logs: [],
+            studentPortalActiveSubject: 'คณิต 1'
+        };
+
+        let gasUrl = ''; 
         let parsedExcelData = null;
         let excelHeaders = [];
 
-        // ================= CONSTRUCTOR: INITIAL STATE RECOVERY =================
-        window.addEventListener('load', () => {
-            initializeDefaultScores();
-            createInitialRestorePoint("เปิดระบบครั้งแรก");
-            goToHome();
-        });
+        // ==========================================
+        // APPLICATION LIFECYCLE
+        // ==========================================
 
-        // Generate dummy scores out of 60 points!
+        window.onload = async function() {
+            // โหลด URL ของ Apps Script จาก LocalStorage
+            const savedUrl = localStorage.getItem('gas_web_app_url');
+            if (savedUrl) {
+                gasUrl = savedUrl;
+                document.getElementById('gasUrlInput').value = gasUrl;
+            }
+
+            // ซิงค์หรือโหลดข้อมูล
+            await loadData();
+            
+            // ตั้งค่าจุดสำรองประวัติ
+            createInitialRestorePoint("เปิดระบบสารสนเทศใหม่");
+            goToHome();
+        };
+
+        // Loading Overlay controllers
+        function showLoading(text) {
+            document.getElementById('loadingText').innerText = text || 'กำลังประมวลผลข้อมูล...';
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.add('hidden');
+        }
+
+        // Custom Modal UI Alerts
+        function showAlert(message) {
+            document.getElementById('alertModalMessage').innerText = message;
+            document.getElementById('alertModal').classList.remove('hidden');
+        }
+
+        function closeAlertModal() {
+            document.getElementById('alertModal').classList.add('hidden');
+        }
+
+        // ==========================================
+        // DATABASE CONTROL & SYNCHRONIZATION WITH GOOGLE SHEETS
+        // ==========================================
+
+        async function loadData() {
+            if (gasUrl) {
+                showLoading("กำลังเชื่อมต่อดึงข้อมูลจาก Google Sheets...");
+                try {
+                    // ป้องกัน Failed to fetch ด้วยการดักรับและควบคุม Timeout ยืดหยุ่น
+                    const response = await fetchWithTimeout(`${gasUrl}?action=getData`, { method: "GET" }, 8000);
+                    const result = await response.json();
+                    
+                    if (result && result.status === "success" && result.data) {
+                        // ปรับโครงสร้างข้อมูลที่ดึงมาให้เข้ากัน
+                        APP_STATE.students = result.data.students || [];
+                        APP_STATE.teachers = result.data.teachers || [];
+                        APP_STATE.logs = result.data.logs || [];
+                        
+                        // แปลง Scores Array จากชีตกลับเป็น Map {} ในระบบ
+                        APP_STATE.scores = {};
+                        if (result.data.scores) {
+                            result.data.scores.forEach(s => {
+                                const key = `${s.studentId || s.student_id}_${s.subject}`;
+                                APP_STATE.scores[key] = {
+                                    studentId: s.studentId || s.student_id,
+                                    subject: s.subject,
+                                    midtermQuiz: parseFloat(s.midtermQuiz || s.mid_quiz || 0),
+                                    midtermNotebook: parseFloat(s.midtermNotebook || s.mid_book || 0),
+                                    finalQuiz: parseFloat(s.finalQuiz || s.final_quiz || 0),
+                                    finalWork: parseFloat(s.finalWork || s.final_work || 0),
+                                    finalNotebook: parseFloat(s.finalNotebook || s.final_book || 0),
+                                    total: parseFloat(s.total || 0),
+                                    updatedBy: s.updatedBy || "ระบบ",
+                                    updatedAt: s.updatedAt || ""
+                                };
+                            });
+                        }
+                        
+                        updateConnectionIndicator(true);
+                        updateDashboardStats(true);
+                    } else {
+                        throw new Error(result ? result.message : "โครงสร้างไม่สมบูรณ์");
+                    }
+                } catch (error) {
+                    // ป้องกันการแจ้งเตือน Error สีแดงใน Console เมื่อเชื่อมต่อไม่ได้ (เช่น เครือข่ายจำกัด หรือ iFrame บล็อก)
+                    console.warn("GAS Web App Connection Offline or Sandbox Restricted. Falling back to local Database. Details:", error.message);
+                    loadMockData();
+                    updateConnectionIndicator(false);
+                    updateDashboardStats(false);
+                } finally {
+                    hideLoading();
+                }
+            } else {
+                loadMockData();
+                updateConnectionIndicator(false);
+                updateDashboardStats(false);
+            }
+        }
+
+        function loadMockData() {
+            // ค้นหาในประวัติ LocalStorage ก่อน
+            const localDb = localStorage.getItem('local_db_backup');
+            if (localDb) {
+                try {
+                    const parsed = JSON.parse(localDb);
+                    APP_STATE.students = parsed.students || [];
+                    APP_STATE.scores = parsed.scores || {};
+                    APP_STATE.teachers = parsed.teachers || [];
+                    APP_STATE.logs = parsed.logs || [];
+                } catch(e) {
+                    useStaticDefaultDatabase();
+                }
+            } else {
+                useStaticDefaultDatabase();
+            }
+        }
+
+        function useStaticDefaultDatabase() {
+            APP_STATE.students = JSON.parse(JSON.stringify(mockDatabase.students));
+            APP_STATE.teachers = JSON.parse(JSON.stringify(mockDatabase.teachers));
+            APP_STATE.logs = JSON.parse(JSON.stringify(mockDatabase.logs));
+            APP_STATE.scores = {};
+            initializeDefaultScores();
+        }
+
         function initializeDefaultScores() {
             const defaultSubjects = ["คณิต 1", "ฟิสิกส์ 1", "อังกฤษทั่วไป", "ภาษาไทยหลัก"];
-            
             APP_STATE.students.forEach(student => {
                 defaultSubjects.forEach(subject => {
                     const key = `${student.id}_${subject}`;
-                    
-                    // New formula breakdown
-                    const midQuiz = Math.floor(Math.random() * 11) + 10; // 10-20 (Max 20)
-                    const midNotebook = Math.floor(Math.random() * 4) + 7; // 7-10 (Max 10)
-                    const finalQuiz = Math.floor(Math.random() * 6) + 10; // 10-15 (Max 15)
-                    const finalWork = Math.floor(Math.random() * 2) + 4;  // 4-5 (Max 5)
-                    const finalNotebook = Math.floor(Math.random() * 4) + 7; // 7-10 (Max 10)
+                    const midQuiz = Math.floor(Math.random() * 11) + 10; 
+                    const midNotebook = Math.floor(Math.random() * 4) + 7; 
+                    const finalQuiz = Math.floor(Math.random() * 6) + 10; 
+                    const finalWork = Math.floor(Math.random() * 2) + 4;  
+                    const finalNotebook = Math.floor(Math.random() * 4) + 7; 
                     
                     const total = midQuiz + midNotebook + finalQuiz + finalWork + finalNotebook;
                     
@@ -901,33 +1097,119 @@
                         finalWork: finalWork,
                         finalNotebook: finalNotebook,
                         total: total,
-                        grade: calculateGrade(total),
                         updatedBy: "ระบบอัตโนมัติ",
                         updatedAt: new Date().toLocaleString('th-TH')
                     };
                 });
             });
-            APP_STATE.logs.push({
-                timestamp: new Date().toLocaleTimeString('th-TH'),
-                action: "ระบบเริ่มต้น",
-                description: "สร้างตารางคะแนนสัดส่วนใหม่ (เต็ม 60 คะแนน) เรียบร้อยแล้ว"
-            });
         }
 
-        // Calculation of Grade formula adapted to max 60 points
-        function calculateGrade(score) {
-            const percentage = (score / 60) * 100;
-            if (percentage >= 80) return "4.0";
-            if (percentage >= 75) return "3.5";
-            if (percentage >= 70) return "3.0";
-            if (percentage >= 65) return "2.5";
-            if (percentage >= 60) return "2.0";
-            if (percentage >= 55) return "1.5";
-            if (percentage >= 50) return "1.0";
-            return "0";
+        async function syncDataBack() {
+            if (gasUrl) {
+                showLoading("กำลังอัปเดตและเขียนคะแนนกลับไปยัง Google Sheets...");
+                try {
+                    // แปลง Scores Map กลับไปเป็น Array เพื่อเขียนบนตาราง Sheet สะดวก
+                    const scoresArray = Object.values(APP_STATE.scores).map(s => ({
+                        student_id: s.studentId,
+                        subject: s.subject,
+                        mid_quiz: s.midtermQuiz,
+                        mid_book: s.midtermNotebook,
+                        final_quiz: s.finalQuiz,
+                        final_work: s.finalWork,
+                        final_book: s.finalNotebook,
+                        total: s.total,
+                        updatedBy: s.updatedBy,
+                        updatedAt: s.updatedAt
+                    }));
+
+                    const studentsArray = APP_STATE.students.map(st => ({
+                        student_id: st.id,
+                        prefix: st.prefix,
+                        name: st.firstname,
+                        surname: st.lastname,
+                        level: st.level,
+                        room: st.room
+                    }));
+
+                    const response = await fetchWithTimeout(gasUrl, {
+                        method: "POST",
+                        headers: { "Content-Type": "text/plain" }, 
+                        body: JSON.stringify({
+                            action: "syncData",
+                            students: studentsArray,
+                            scores: scoresArray,
+                            teachers: APP_STATE.teachers,
+                            logs: APP_STATE.logs
+                        })
+                    }, 20000);
+                    
+                    const result = await response.json();
+                    if (result && result.status === "success") {
+                        updateDashboardStats(true);
+                        backupLocal();
+                        return true;
+                    } else {
+                        throw new Error(result ? result.message : "การติดต่อเซิร์ฟเวอร์ผิดพลาด");
+                    }
+                } catch (error) {
+                    console.warn("GAS Sync Failed (Falling back to local cache): ", error.message);
+                    backupLocal();
+                    updateDashboardStats(false);
+                    return true; // ปล่อยให้ครูทำงานต่อได้ในโหมดออฟไลน์
+                } finally {
+                    hideLoading();
+                }
+            } else {
+                backupLocal();
+                updateDashboardStats(false);
+                return true;
+            }
         }
 
-        // ================= SYSTEM NAVIGATION CONTROLLER =================
+        function backupLocal() {
+            localStorage.setItem('local_db_backup', JSON.stringify({
+                students: APP_STATE.students,
+                scores: APP_STATE.scores,
+                teachers: APP_STATE.teachers,
+                logs: APP_STATE.logs
+            }));
+        }
+
+        // Fetch timeout helper
+        function fetchWithTimeout(resource, options = {}, timeout = 10000) {
+            return Promise.race([
+                fetch(resource, options),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('เชื่อมต่อหมดเวลา (Timeout)')), timeout))
+            ]);
+        }
+
+        function updateConnectionIndicator(isConnected) {
+            const indicator = document.getElementById('connectionIndicator');
+            const connectionText = document.getElementById('connectionText');
+            const configAlert = document.getElementById('configAlert');
+            
+            if (isConnected) {
+                indicator.className = "flex items-center gap-2 px-3 py-1 bg-emerald-500/20 text-emerald-200 border border-emerald-500/30 rounded-full text-[11px] font-medium";
+                connectionText.innerText = "เชื่อมโยง Google Sheets เรียลไทม์";
+                if (configAlert) configAlert.classList.add('hidden');
+            } else {
+                indicator.className = "flex items-center gap-2 px-3 py-1 bg-amber-500/20 text-amber-200 border border-amber-500/30 rounded-full text-[11px] font-medium";
+                connectionText.innerText = "โหมดจัดเก็บจำลองในเครื่อง";
+                if (configAlert) configAlert.classList.remove('hidden');
+            }
+        }
+
+        function updateDashboardStats(isLive) {
+            document.getElementById('stat-students').innerText = `${APP_STATE.students.length} คน`;
+            document.getElementById('stat-scores').innerText = `${Object.keys(APP_STATE.scores).length} รายการ`;
+            document.getElementById('stat-teachers-count').innerText = `${APP_STATE.teachers.length} บัญชี`;
+            document.getElementById('stat-source').innerText = isLive ? "ระบบ Google Sheets" : "ประมวลจำลองในเครื่อง";
+        }
+
+        // ==========================================
+        // UI & SYSTEM NAVIGATION CONTROLLER
+        // ==========================================
+
         function hideAllPages() {
             document.getElementById('pageHome').classList.add('hidden');
             document.getElementById('pageLogin').classList.add('hidden');
@@ -935,7 +1217,7 @@
             document.getElementById('pageTeacherDashboard').classList.add('hidden');
             document.getElementById('pageAdminDashboard').classList.add('hidden');
             
-            // hide feedback
+            // ล้างบอร์ดความเห็น
             const feedback = document.getElementById('loginFeedback');
             feedback.classList.add('hidden');
             feedback.className = "hidden p-3 text-xs rounded-lg flex items-center gap-2";
@@ -949,7 +1231,6 @@
             APP_STATE.currentUser = null;
         }
 
-        // Show standard Login Tab depending on the user selection
         function showLoginTab(role) {
             hideAllPages();
             APP_STATE.currentRole = role;
@@ -968,7 +1249,7 @@
             const registerPrompt = document.getElementById('registerPrompt');
             const registerForm = document.getElementById('registerForm');
             
-            // Clean values
+            // ล้างค่าข้อมูล
             document.getElementById('studentIdInput').value = "";
             document.getElementById('usernameInput').value = "";
             document.getElementById('passwordInput').value = "";
@@ -1008,7 +1289,6 @@
             }
         }
 
-        // Toggle register fields inside teacher login
         function toggleRegisterForm(show) {
             const form = document.getElementById('registerForm');
             if (show) {
@@ -1021,7 +1301,6 @@
             }
         }
 
-        // Show Custom Feedback message (replace browser alerts)
         function showFeedback(text, isError = false) {
             const container = document.getElementById('loginFeedback');
             container.classList.remove('hidden');
@@ -1034,7 +1313,10 @@
             }
         }
 
-        // ================= AUTHENTICATION ACTIONS =================
+        // ==========================================
+        // AUTHENTICATION ACTIONS
+        // ==========================================
+
         function submitStudentLogin() {
             const inputVal = document.getElementById('studentIdInput').value.trim();
             if (!inputVal) {
@@ -1042,27 +1324,21 @@
                 return;
             }
 
-            // Find student in local array
             const student = APP_STATE.students.find(s => s.id === inputVal);
             if (!student) {
                 showFeedback("ไม่พบเลขประจำตัวนักเรียนนี้ในฐานข้อมูลโรงเรียน (ตัวอย่าง: 26307, 26532)", true);
                 return;
             }
 
-            // Login Student successfully
             APP_STATE.currentUser = student;
             APP_STATE.currentRole = 'student';
             
-            // Set navbar state
             document.getElementById('userBadge').classList.remove('hidden');
             document.getElementById('userBadgeText').innerText = `นักเรียน: ${student.prefix}${student.firstname}`;
             document.getElementById('logoutBtn').classList.remove('hidden');
             
-            // Direct to Portal
             hideAllPages();
             document.getElementById('pageStudentPortal').classList.remove('hidden');
-            
-            // Load student profile UI
             renderStudentDashboard();
         }
 
@@ -1076,7 +1352,6 @@
             }
 
             if (APP_STATE.currentRole === 'teacher') {
-                // Check in teachers database
                 const found = APP_STATE.teachers.find(t => t.username === userVal);
                 if (!found) {
                     showFeedback("ไม่พบชื่อผู้ใช้งานนี้ในสิทธิ์คุณครู", true);
@@ -1091,7 +1366,6 @@
                     return;
                 }
 
-                // Authorized
                 APP_STATE.currentUser = found;
                 document.getElementById('userBadge').classList.remove('hidden');
                 document.getElementById('userBadgeText').innerText = `${found.fullname}`;
@@ -1102,7 +1376,6 @@
                 renderTeacherDashboard();
 
             } else if (APP_STATE.currentRole === 'admin') {
-                // Check Admin fixed password
                 if (userVal === 'admin' && passVal === 'admin123') {
                     APP_STATE.currentUser = { fullname: 'ผู้ดูแลระบบสูงสุด', role: 'admin' };
                     document.getElementById('userBadge').classList.remove('hidden');
@@ -1118,7 +1391,7 @@
             }
         }
 
-        function submitRegister() {
+        async function submitRegister() {
             const fullname = document.getElementById('regNameInput').value.trim();
             const username = document.getElementById('regUsernameInput').value.trim();
             const password = document.getElementById('regPasswordInput').value.trim();
@@ -1133,28 +1406,36 @@
                 return;
             }
 
-            // Insert wait list
-            APP_STATE.teachers.push({
+            const newTeacher = {
                 username,
                 password,
                 fullname,
                 approved: false
-            });
+            };
+            
+            APP_STATE.teachers.push(newTeacher);
 
-            showFeedback("ส่งคำร้องสำเร็จ! กรุณาให้ 'แอดมิน' ทำการเข้าสู่ระบบเพื่อกด Approve อนุมัติสิทธิ์คุณครูท่านนี้");
-            toggleRegisterForm(false);
+            addLog("ระบบลงทะเบียน", `ครู ${fullname} สมัครสมาชิกขอสิทธิ์เข้าใช้งานรหัส: ${username}`);
+            
+            const success = await syncDataBack();
+            if (success) {
+                showFeedback("ส่งคำร้องสำเร็จ! กรุณาให้ 'แอดมิน' ทำการเข้าสู่ระบบเพื่อกด Approve อนุมัติสิทธิ์คุณครูท่านนี้");
+                toggleRegisterForm(false);
+            }
         }
 
         function handleLogout() {
             goToHome();
         }
 
-        // ================= STUDENT LOGIC & RENDERER =================
+        // ==========================================
+        // STUDENT LOGIC & RENDERER
+        // ==========================================
+
         function renderStudentDashboard() {
             const student = APP_STATE.currentUser;
             if (!student) return;
 
-            // Fill header info
             document.getElementById('studentNameDisplay').innerText = `${student.prefix} ${student.firstname} ${student.lastname}`;
             document.getElementById('studentIdDisplay').innerText = student.id;
             
@@ -1162,7 +1443,6 @@
             document.getElementById('studentCourseRoom').innerText = `นักเรียนชั้น ม.${student.level}/${student.room}`;
             document.getElementById('studentAdvisorDisplay').innerText = ROOM_ADVISORS[roomKey] || "ไม่ระบุ";
 
-            // Populate subjects
             const listContainer = document.getElementById('studentSubjectList');
             listContainer.innerHTML = "";
 
@@ -1185,7 +1465,6 @@
                 listContainer.appendChild(btn);
             });
 
-            // Display selected score details
             displayStudentScores();
         }
 
@@ -1201,26 +1480,14 @@
                 document.getElementById('lastUpdatedByText').innerText = record.updatedBy || "คุณครูผู้ประเมิน";
                 document.getElementById('lastUpdatedTimeText').innerText = record.updatedAt || "-";
 
-                // Calculations
                 const midtermTotal = record.midtermQuiz + record.midtermNotebook;
                 const finalTotal = record.finalQuiz + record.finalWork + record.finalNotebook;
                 const total = midtermTotal + finalTotal;
 
-                // Score items
                 document.getElementById('statClassworkScore').innerText = `${midtermTotal.toFixed(1)} / 30`;
                 document.getElementById('statFinalScore').innerText = `${finalTotal.toFixed(1)} / 30`;
                 document.getElementById('statTotalScore').innerText = `${total.toFixed(1)} / 60`;
-                
-                const grade = record.grade;
-                let colorClass = "text-emerald-600";
-                if (grade === "0") colorClass = "text-rose-600";
-                else if (parseFloat(grade) < 2.0) colorClass = "text-yellow-600";
-                
-                const gradeLabel = document.getElementById('statGradeText');
-                gradeLabel.className = `text-xl font-extrabold ${colorClass}`;
-                gradeLabel.innerText = `เกรด: ${grade}`;
 
-                // Set breakdowns inside text block
                 document.getElementById('detailMidtermTotal').innerText = `${midtermTotal} / 30 คะแนน`;
                 document.getElementById('detailMidtermQuiz').innerText = `${record.midtermQuiz} / 20`;
                 document.getElementById('detailMidtermNotebook').innerText = `${record.midtermNotebook} / 10`;
@@ -1230,13 +1497,11 @@
                 document.getElementById('detailFinalWork').innerText = `${record.finalWork} / 5`;
                 document.getElementById('detailFinalNotebook').innerText = `${record.finalNotebook} / 10`;
             } else {
-                // If not found
                 document.getElementById('lastUpdatedByText').innerText = "-";
                 document.getElementById('lastUpdatedTimeText').innerText = "ไม่มีบันทึกข้อมูล";
                 document.getElementById('statClassworkScore').innerText = "0.0 / 30";
                 document.getElementById('statFinalScore').innerText = "0.0 / 30";
                 document.getElementById('statTotalScore').innerText = "0.0 / 60";
-                document.getElementById('statGradeText').innerText = "-";
                 
                 document.getElementById('detailMidtermTotal').innerText = "0 / 30";
                 document.getElementById('detailMidtermQuiz').innerText = "0 / 20";
@@ -1249,8 +1514,10 @@
             }
         }
 
+        // ==========================================
+        // TEACHER LOGIC & EDITOR
+        // ==========================================
 
-        // ================= TEACHER LOGIC & EDITOR =================
         function renderTeacherDashboard() {
             onTeacherFilterChange();
             renderTeacherLogs();
@@ -1278,10 +1545,8 @@
             const emptyState = document.getElementById('teacherTableEmptyState');
             tableBody.innerHTML = "";
 
-            // Filter students matching classroom
             let filteredStudents = APP_STATE.students.filter(s => s.level === level && s.room === room);
 
-            // Apply text search on name or id
             if (search) {
                 filteredStudents = filteredStudents.filter(s => 
                     s.id.includes(search) || 
@@ -1310,7 +1575,6 @@
                         finalWork: 0,
                         finalNotebook: 0,
                         total: 0,
-                        grade: "0",
                         updatedBy: "-",
                         updatedAt: "-"
                     };
@@ -1323,7 +1587,6 @@
                     <td class="p-3 font-semibold text-slate-800 font-mono">${student.id}</td>
                     <td class="p-3 font-semibold text-slate-800">${student.prefix}${student.firstname} ${student.lastname}</td>
                     
-                    <!-- Editable Fields: Midterm -->
                     <td class="p-2 bg-sky-50/20 text-center border-r border-slate-200">
                         <input type="number" min="0" max="20" step="any" value="${record.midtermQuiz || 0}" id="mq_${student.id}" class="w-14 bg-white border border-slate-300 rounded text-center py-1 font-semibold text-blue-900 focus:ring-2 focus:ring-teal-500">
                     </td>
@@ -1331,7 +1594,6 @@
                         <input type="number" min="0" max="10" step="any" value="${record.midtermNotebook || 0}" id="mn_${student.id}" class="w-14 bg-white border border-slate-300 rounded text-center py-1 font-semibold text-sky-900 focus:ring-2 focus:ring-teal-500">
                     </td>
 
-                    <!-- Editable Fields: Final -->
                     <td class="p-2 bg-purple-50/20 text-center border-r border-slate-200">
                         <input type="number" min="0" max="15" step="any" value="${record.finalQuiz || 0}" id="fq_${student.id}" class="w-14 bg-white border border-slate-300 rounded text-center py-1 font-semibold text-purple-900 focus:ring-2 focus:ring-teal-500">
                     </td>
@@ -1342,15 +1604,10 @@
                         <input type="number" min="0" max="10" step="any" value="${record.finalNotebook || 0}" id="fn_${student.id}" class="w-14 bg-white border border-slate-300 rounded text-center py-1 font-semibold text-fuchsia-900 focus:ring-2 focus:ring-teal-500">
                     </td>
                     
-                    <!-- Read-only values calculated -->
                     <td class="p-3 text-center font-bold text-slate-800 bg-slate-100" id="total_${student.id}">
                         ${(record.total || 0).toFixed(1)}
                     </td>
-                    <td class="p-3 text-center font-bold text-teal-800 bg-teal-50" id="grade_${student.id}">
-                        ${record.grade || "0"}
-                    </td>
                     
-                    <!-- Action Button -->
                     <td class="p-2 text-center">
                         <button onclick="saveSingleStudentScore('${student.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1 px-2.5 rounded text-[11px] transition shadow-sm">
                             <i class="fa-solid fa-floppy-disk"></i> บันทึก
@@ -1361,13 +1618,11 @@
             });
         }
 
-        // Save a single pupil row changes
-        function saveSingleStudentScore(studentId) {
+        async function saveSingleStudentScore(studentId) {
             createInitialRestorePoint(`ก่อนแก้ไขคะแนนรายบุคคล รหัส ${studentId}`);
 
             const subject = document.getElementById('filterSubject').value;
             
-            // Read new 5 fields
             const mqVal = parseFloat(document.getElementById(`mq_${studentId}`).value) || 0;
             const mnVal = parseFloat(document.getElementById(`mn_${studentId}`).value) || 0;
             const fqVal = parseFloat(document.getElementById(`fq_${studentId}`).value) || 0;
@@ -1375,10 +1630,8 @@
             const fnVal = parseFloat(document.getElementById(`fn_${studentId}`).value) || 0;
 
             const total = mqVal + mnVal + fqVal + fwVal + fnVal;
-            const grade = calculateGrade(total);
 
             const scoreKey = `${studentId}_${subject}`;
-            const previousScore = APP_STATE.scores[scoreKey] ? APP_STATE.scores[scoreKey].total : 0;
 
             APP_STATE.scores[scoreKey] = {
                 studentId,
@@ -1389,26 +1642,18 @@
                 finalWork: fwVal,
                 finalNotebook: fnVal,
                 total: total,
-                grade: grade,
                 updatedBy: APP_STATE.currentUser.fullname,
                 updatedAt: new Date().toLocaleString('th-TH')
             };
 
-            // Update fields visually fast
             document.getElementById(`total_${studentId}`).innerText = total.toFixed(1);
-            document.getElementById(`grade_${studentId}`).innerText = grade;
 
-            // Log update activity
             const studentInfo = APP_STATE.students.find(s => s.id === studentId);
             const studentName = studentInfo ? `${studentInfo.firstname} ${studentInfo.lastname}` : studentId;
 
-            const logMsg = {
-                timestamp: new Date().toLocaleTimeString('th-TH'),
-                action: "แก้ไขคะแนน",
-                description: `ครู ${APP_STATE.currentUser.fullname} แก้ไข ${subject} ของ ${studentName} (${total.toFixed(1)} คะแนน เกรด ${grade})`
-            };
-            APP_STATE.logs.unshift(logMsg);
+            addLog(APP_STATE.currentUser.fullname, `แก้ไขคะแนน ${subject} ของ ${studentName} (${total.toFixed(1)} คะแนน)`);
 
+            await syncDataBack();
             renderTeacherLogs();
         }
 
@@ -1432,12 +1677,9 @@
                 room: room
             });
 
-            APP_STATE.logs.unshift({
-                timestamp: new Date().toLocaleTimeString('th-TH'),
-                action: "เพิ่มนักเรียน",
-                description: `เพิ่มรายชื่อ ${fname} ${lname} (รหัส: ${newId}) เข้าห้อง ม.${level}/${room} เรียบร้อย`
-            });
+            addLog(APP_STATE.currentUser.fullname, `เพิ่มรายชื่อ ${fname} ${lname} (รหัส: ${newId}) เข้าห้อง ม.${level}/${room}`);
 
+            syncDataBack();
             onTeacherFilterChange();
         }
 
@@ -1465,7 +1707,10 @@
         }
 
 
-        // ================= ADMIN PORTAL CONTROL =================
+        // ==========================================
+        // ADMIN PORTAL CONTROL
+        // ==========================================
+
         function renderAdminDashboard() {
             document.getElementById('adminStatStudents').innerText = `${APP_STATE.students.length} คน`;
             document.getElementById('adminStatTeachers').innerText = `${APP_STATE.teachers.filter(t => t.approved).length} บัญชี`;
@@ -1474,6 +1719,7 @@
 
             renderAdminTeacherApprovals();
             renderAdminRestorePoints();
+            updateDashboardStats(!!gasUrl);
         }
 
         function renderAdminTeacherApprovals() {
@@ -1531,17 +1777,14 @@
             });
         }
 
-        function approveTeacherAccount(username) {
+        async function approveTeacherAccount(username) {
             const index = APP_STATE.teachers.findIndex(t => t.username === username);
             if (index !== -1) {
                 APP_STATE.teachers[index].approved = true;
                 
-                APP_STATE.logs.unshift({
-                    timestamp: new Date().toLocaleTimeString('th-TH'),
-                    action: "อนุมัติคุณครู",
-                    description: `แอดมิน อนุมัติสิทธิ์การแก้ไขคะแนนของคุณครู: ${APP_STATE.teachers[index].fullname}`
-                });
+                addLog("ผู้ดูแลระบบ", `แอดมิน อนุมัติสิทธิ์การแก้ไขคะแนนของคุณครู: ${APP_STATE.teachers[index].fullname}`);
 
+                await syncDataBack();
                 renderAdminDashboard();
             }
         }
@@ -1596,7 +1839,7 @@
             });
         }
 
-        function executeRestore(pointId) {
+        async function executeRestore(pointId) {
             const point = APP_STATE.restorePoints.find(p => p.id === pointId);
             if (!point) return;
 
@@ -1604,12 +1847,9 @@
                 APP_STATE.scores = JSON.parse(JSON.stringify(point.scores));
                 APP_STATE.students = JSON.parse(JSON.stringify(point.students));
 
-                APP_STATE.logs.unshift({
-                    timestamp: new Date().toLocaleTimeString('th-TH'),
-                    action: "กู้ข้อมูลฐาน",
-                    description: `แอดมิน ย้อนฐานข้อมูลกลับจุด "${point.reason}" สำเร็จ`
-                });
+                addLog("ระบบกู้คืน", `แอดมิน ย้อนฐานข้อมูลกลับจุด "${point.reason}"`);
 
+                await syncDataBack();
                 renderAdminDashboard();
                 alert("ระบบกู้คืนคะแนนและรายชื่อเรียบร้อยแล้ว!");
             }
@@ -1619,15 +1859,71 @@
             if (confirm("คุณแน่ใจหรือไม่ว่าต้องการรีเซ็ตระบบคะแนนนักเรียนทั้งหมด?\nคะแนนจะถูกเริ่มใหม่ในหน่วยความจำ")) {
                 APP_STATE.scores = {};
                 APP_STATE.logs = [];
-                initializeDefaultScores();
+                useStaticDefaultDatabase();
                 createInitialRestorePoint("รีเซ็ตระบบหลัก");
                 renderAdminDashboard();
                 alert("รีเซ็ตระบบเป็นค่าเริ่มต้นสมบูรณ์");
             }
         }
 
+        async function saveGasConnection() {
+            const url = document.getElementById('gasUrlInput').value.trim();
+            if (!url) {
+                showAlert("กรุณาระบุ URL ของ Google Apps Script เผยแพร่เว็บแอปให้ถูกต้อง");
+                return;
+            }
 
-        // ================= BULK IMPORT: EXCEL AND CSV ENGINE (60 POINTS STRUCTURE) =================
+            if (!url.startsWith('https://script.google.com/')) {
+                showAlert("ข้อผิดพลาด: รูปแบบ URL ไม่ถูกต้อง ต้องเริ่มต้นด้วย https://script.google.com/");
+                return;
+            }
+
+            gasUrl = url;
+            localStorage.setItem('gas_web_app_url', url);
+
+            // ซิงค์ดึงข้อมูลทันที
+            await loadData();
+
+            if (gasUrl) {
+                document.getElementById('btnDisconnectGas').classList.remove('hidden');
+                showAlert("เชื่อมโยงระบบเข้ากับฐานข้อมูล Google Sheets เรียบร้อยแล้ว!");
+                renderAdminDashboard();
+            }
+        }
+
+        function disconnectGasConnection() {
+            gasUrl = '';
+            localStorage.removeItem('gas_web_app_url');
+            document.getElementById('gasUrlInput').value = '';
+            document.getElementById('btnDisconnectGas').classList.add('hidden');
+
+            loadMockData();
+            updateConnectionIndicator(false);
+            updateDashboardStats(false);
+            renderAdminDashboard();
+            
+            showAlert("ยกเลิกการเชื่อมต่อสำเร็จ ระบบเปลี่ยนกลับไปใช้โหมดจัดเก็บในเครื่องชั่วคราว");
+        }
+
+        function addLog(user, actionDescription) {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('th-TH');
+            
+            APP_STATE.logs.unshift({
+                timestamp: timeStr,
+                action: "ความเคลื่อนไหว",
+                description: `[${user}] ${actionDescription}`
+            });
+            
+            if (APP_STATE.logs.length > 50) {
+                APP_STATE.logs.pop();
+            }
+        }
+
+        // ==========================================
+        // BULK IMPORT: EXCEL AND CSV ENGINE
+        // ==========================================
+
         function openImportExcelModal() {
             document.getElementById('importExcelModal').classList.remove('hidden');
             
@@ -1825,7 +2121,7 @@
             document.getElementById('confirmImportExcelBtn').disabled = false;
         }
 
-        function executeExcelImport() {
+        async function executeExcelImport() {
             createInitialRestorePoint("ก่อนนำเข้าคะแนน Excel สัดส่วนใหม่");
 
             const level = document.getElementById('excelTargetLevel').value;
@@ -1861,7 +2157,6 @@
                 const fwVal = parseFloat(row[fwCol]) || 0;
                 const fnVal = parseFloat(row[fnCol]) || 0;
                 const total = mqVal + mnVal + fqVal + fwVal + fnVal;
-                const grade = calculateGrade(total);
 
                 const scoreKey = `${rawId}_${subject}`;
                 APP_STATE.scores[scoreKey] = {
@@ -1873,7 +2168,6 @@
                     finalWork: fwVal,
                     finalNotebook: fnVal,
                     total: total,
-                    grade: grade,
                     updatedBy: `${APP_STATE.currentUser.fullname} (Excel)`,
                     updatedAt: new Date().toLocaleString('th-TH')
                 };
@@ -1881,15 +2175,13 @@
                 successCount++;
             });
 
-            APP_STATE.logs.unshift({
-                timestamp: new Date().toLocaleTimeString('th-TH'),
-                action: "นำเข้าคะแนน Excel",
-                description: `ครู ${APP_STATE.currentUser.fullname} อัปเดตคะแนน ${subject} ม.${level}/${room} (สำเร็จ: ${successCount} คน, ไม่พบรหัส: ${missingInDbCount} คน)`
-            });
+            addLog(APP_STATE.currentUser.fullname, `อัปโหลดไฟล์คะแนน ${subject} ม.${level}/${room} (สำเร็จ: ${successCount} คน, ข้าม: ${missingInDbCount} คน)`);
 
             document.getElementById('filterLevel').value = level;
             document.getElementById('filterRoom').value = room;
             document.getElementById('filterSubject').value = subject;
+
+            await syncDataBack();
 
             onTeacherFilterChange();
             renderTeacherLogs();
@@ -1899,7 +2191,6 @@
         }
 
         function downloadSampleTemplate() {
-            // Updated columns matching exactly 60 points specs
             const ws_data = [
                 ["เลขประจำตัว", "คำนำหน้า", "ชื่อ", "นามสกุล", "กลางภาค สอบย่อย (20)", "กลางภาค สมุด (10)", "ปลายภาค สอบย่อย (15)", "ปลายภาค งาน (5)", "ปลายภาค สมุด (10)"],
                 ["26307", "นาย", "นิธิกร", "มูลทองชุน", 15, 8, 12, 4, 9],
